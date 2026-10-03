@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import org.hibernate.annotations.CreationTimestamp;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.*;
 import lombok.*;
 
 /**
@@ -26,17 +27,21 @@ public class PointTransaction {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id", nullable = false)
+    @NotNull
     private User user;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "business_id", nullable = false)
+    @NotNull
     private Business business;
 
     @Column(nullable = false)
+    @NotNull
     private Integer points;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
+    @NotNull
     private Type type;
 
     private String reason;
@@ -52,6 +57,17 @@ public class PointTransaction {
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "redemption_id", unique = true)
     private Redemption redemption;
+
+    @AssertTrue(message = "EARN needs points > 0 and registeredBy; REDEEM needs points < 0 and redemption")
+    private boolean isConsistentWithType() {
+        if (type == null || points == null) {
+            return true;
+        }
+        return switch (type) {
+            case EARN -> points > 0 && registeredBy != null;
+            case REDEEM -> points < 0 && redemption != null;
+        };
+    }
 
     public enum Type {
         EARN, REDEEM

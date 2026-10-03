@@ -1,6 +1,7 @@
 package gal.usc.etse.es.tapeacompostela.model.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.*;
 import lombok.*;
 
 @Entity
@@ -21,13 +22,17 @@ public class MeetupStop {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "meetup_id", nullable = false)
+    @NotNull
     private Meetup meetup;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "business_id", nullable = false)
+    @NotNull
     private Business business;
 
     // Empieza en 1
     @Column(name = "stop_order", nullable = false)
+    @NotNull
+    @Positive
     private Integer stopOrder;
 }

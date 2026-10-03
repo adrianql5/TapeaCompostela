@@ -1,6 +1,7 @@
 package gal.usc.etse.es.tapeacompostela.model.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.*;
 import lombok.*;
 
 /**
@@ -21,9 +22,11 @@ public class Badge {
     private Long id;
 
     @Column(nullable = false, unique = true, length = 50)
+    @NotBlank
     private String code;
 
     @Column(nullable = false, length = 100)
+    @NotBlank
     private String name;
 
     @Column(length = 500)
@@ -34,9 +37,12 @@ public class Badge {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "condition_type", nullable = false, length = 30)
+    @NotNull
     private ConditionType conditionType;
 
     @Column(name = "target_value", nullable = false)
+    @NotNull
+    @Positive
     private Integer targetValue;
 
     public enum ConditionType {

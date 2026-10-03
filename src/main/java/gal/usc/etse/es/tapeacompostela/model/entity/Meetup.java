@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import org.hibernate.annotations.CreationTimestamp;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.*;
 import lombok.*;
 
 @Entity
@@ -22,9 +23,11 @@ public class Meetup {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "creator_id", nullable = false)
+    @NotNull
     private User creator;
 
     @Column(nullable = false, length = 150)
+    @NotBlank
     private String title;
 
     @Column(length = 1000)
@@ -32,6 +35,7 @@ public class Meetup {
 
     // Cuándo es el plan
     @Column(name = "scheduled_at", nullable = false)
+    @NotNull
     private LocalDateTime scheduledAt;
 
     @CreationTimestamp

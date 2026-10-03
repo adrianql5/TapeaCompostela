@@ -1,6 +1,7 @@
 package gal.usc.etse.es.tapeacompostela.model.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.*;
 import lombok.*;
 
 @Entity
@@ -17,5 +18,6 @@ public class Tag {
     private Long id;
 
     @Column(nullable = false, unique = true, length = 50)
+    @NotBlank
     private String name;
 }

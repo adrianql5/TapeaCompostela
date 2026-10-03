@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import org.hibernate.annotations.CreationTimestamp;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.*;
 import lombok.*;
 
 @Entity
@@ -22,13 +23,16 @@ public class MeetupComment {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "author_id", nullable = false)
+    @NotNull
     private User author;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "meetup_id", nullable = false)
+    @NotNull
     private Meetup meetup;
 
     @Column(nullable = false, length = 1000)
+    @NotBlank
     private String content;
 
     @CreationTimestamp

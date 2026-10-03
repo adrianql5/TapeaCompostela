@@ -5,9 +5,11 @@ import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.CreationTimestamp;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.*;
 import lombok.*;
 
 @Entity
@@ -24,21 +26,25 @@ public class Business {
     private Long id;
 
     @Column(nullable = false, length = 150)
+    @NotBlank
     private String name;
 
     @Column(length = 2000)
     private String description;
 
     @Column(nullable = false)
+    @NotBlank
     private String address;
 
     @Column(nullable = false)
+    @NotNull
     private Double latitude;
 
     @Column(nullable = false)
+    @NotNull
     private Double longitude;
 
-    // Un local adherido debe tener propietario (CHECK en la BD)
+    // Un local adherido debe tener propietario
     @Column(name = "is_partner", nullable = false)
     @Builder.Default
     private boolean partner = false;
@@ -62,11 +68,16 @@ public class Business {
 
     // Las actualiza el servicio al crear/editar/borrar reseñas del local
     @Column(name = "average_rating", nullable = false, precision = 3, scale = 2)
+    @ColumnDefault("0")
     @Builder.Default
+    @NotNull
     private BigDecimal averageRating = BigDecimal.ZERO;
 
     @Column(name = "rating_count", nullable = false)
+    @ColumnDefault("0")
     @Builder.Default
+    @NotNull
+    @PositiveOrZero
     private Integer ratingCount = 0;
 
     @CreationTimestamp
@@ -79,6 +90,11 @@ public class Business {
             inverseJoinColumns = @JoinColumn(name = "tag_id"))
     @Builder.Default
     private Set<Tag> tags = new HashSet<>();
+
+    @AssertTrue(message = "a partner business must have an owner")
+    private boolean isOwnerSetIfPartner() {
+        return !partner || owner != null;
+    }
 
     public enum PriceRange {
         CHEAP, MODERATE, EXPENSIVE

@@ -4,6 +4,7 @@ import java.time.DayOfWeek;
 import java.time.LocalTime;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.*;
 import lombok.*;
 
 /**
@@ -26,16 +27,20 @@ public class OpeningHour {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "business_id", nullable = false)
+    @NotNull
     private Business business;
 
     @Convert(converter = DayOfWeekConverter.class)
     @Column(name = "day_of_week", nullable = false)
+    @NotNull
     private DayOfWeek dayOfWeek;
 
     @Column(name = "opens_at", nullable = false)
+    @NotNull
     private LocalTime opensAt;
 
     @Column(name = "closes_at", nullable = false)
+    @NotNull
     private LocalTime closesAt;
 
     /**
