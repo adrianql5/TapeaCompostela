@@ -96,6 +96,25 @@ public class Business {
         return !partner || owner != null;
     }
 
+    // averageRating, ratingCount and createdAt are managed by the server, so they aren't taken from the DTO
+    public static Business from(gal.usc.etse.es.tapeacompostela.model.dto.Business business, User owner, Set<Tag> tags) {
+        return Business.builder()
+                .id(business.id())
+                .name(business.name())
+                .description(business.description())
+                .address(business.address())
+                .latitude(business.latitude())
+                .longitude(business.longitude())
+                .partner(Boolean.TRUE.equals(business.partner()))
+                .owner(owner)
+                .priceRange(business.priceRange())
+                .phone(business.phone())
+                .website(business.website())
+                .imageUrl(business.imageUrl())
+                .tags(tags)
+                .build();
+    }
+
     public enum PriceRange {
         CHEAP, MODERATE, EXPENSIVE
     }
