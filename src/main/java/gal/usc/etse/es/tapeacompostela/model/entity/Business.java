@@ -39,11 +39,11 @@ public class Business {
     private String address;
 
     @Column(nullable = false)
-    @NotBlank
+    @NotNull
     private Double latitude;
 
     @Column(nullable = false)
-    @NotBlank
+    @NotNull
     private Double longitude;
 
     @Enumerated(EnumType.STRING)
