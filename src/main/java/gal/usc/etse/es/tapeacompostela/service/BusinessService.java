@@ -7,11 +7,14 @@ import gal.usc.etse.es.tapeacompostela.model.entity.Tag;
 import gal.usc.etse.es.tapeacompostela.repository.BusinessRepository;
 import gal.usc.etse.es.tapeacompostela.repository.TagRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Example;
+import org.springframework.data.domain.ExampleMatcher;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -24,8 +27,20 @@ public class BusinessService {
     private final BusinessRepository businesses;
     private final TagRepository tags;
 
-    public List<BusinessDTO> getBusinesses() {
-        return businesses.findAll().stream().map(this::toDTO).toList();
+    private static final ExampleMatcher SEARCH = ExampleMatcher.matching().withIgnorePaths("averageRating", "ratingCount").withMatcher("name", match -> match.contains().ignoreCase());
+
+    public Page<BusinessDTO> getBusinesses(String name, Business.PriceRange priceRange, Pageable page){
+        
+        // Query by example, la sonda solo tiene los campos que le llegaron, el resto los ignora
+        // El nombre coincide si contiene el texto  sin distinguir mayúsculas ("taberna" encuentra "A Taberna do Bispo")
+        Business probe = new Business();
+        probe.setName(name);
+        probe.setPriceRange(priceRange);
+        // Los campos con valor por defecto (averageRating = 0, ratingCount = 0) no son null, así que formarían parte
+        // del filtro: withIgnorePaths los deja fuera. Query by Example no usa las listas
+        probe.setAverageRating(null);
+        probe.setRatingCount(null);
+        return businesses.findAll(Example.of(probe, SEARCH), page).map(this::toDTO);
     }
 
     public BusinessDTO getBusiness(Long id) {

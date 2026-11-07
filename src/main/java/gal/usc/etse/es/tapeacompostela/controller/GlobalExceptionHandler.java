@@ -2,6 +2,7 @@ package gal.usc.etse.es.tapeacompostela.controller;
 
 import gal.usc.etse.es.tapeacompostela.exception.ConflictException;
 import gal.usc.etse.es.tapeacompostela.exception.NotFoundException;
+import org.springframework.data.core.PropertyReferenceException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -33,6 +34,14 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     public ProblemDetail handleConflict(ConflictException ex) {
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
         problem.setTitle("Conflict with the existing data");
+        return problem;
+    }
+
+    // Ordenar dado un campo que no existe
+    @ExceptionHandler(PropertyReferenceException.class)
+     public ProblemDetail handleWrongSort(PropertyReferenceException ex) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.getMessage());
+        problem.setTitle("Invalid sort");
         return problem;
     }
 
