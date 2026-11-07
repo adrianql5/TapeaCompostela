@@ -6,6 +6,7 @@ import gal.usc.etse.es.tapeacompostela.model.entity.Business;
 import gal.usc.etse.es.tapeacompostela.model.entity.Tag;
 import gal.usc.etse.es.tapeacompostela.repository.BusinessRepository;
 import gal.usc.etse.es.tapeacompostela.repository.TagRepository;
+import com.github.fge.jsonpatch.JsonPatchException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.ExampleMatcher;
@@ -15,6 +16,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -26,13 +29,17 @@ import java.util.stream.Collectors;
 public class BusinessService {
     private final BusinessRepository businesses;
     private final TagRepository tags;
+    private final PatchUtils patchUtils;
 
+    // Los campos que un PATCH puede cambiar
+    private static final Set<String> EDITABLE = Set.of("name", "description", "address", "latitude", "longitude", "priceRange", "phone", "tags");
+    
     private static final ExampleMatcher SEARCH = ExampleMatcher.matching().withIgnorePaths("averageRating", "ratingCount").withMatcher("name", match -> match.contains().ignoreCase());
 
     public Page<BusinessDTO> getBusinesses(String name, Business.PriceRange priceRange, Pageable page){
         
         // Query by example, la sonda solo tiene los campos que le llegaron, el resto los ignora
-        // El nombre coincide si contiene el texto  sin distinguir mayúsculas ("taberna" encuentra "A Taberna do Bispo")
+        // El nombre coincide si contiene el texto sin distinguir mayúsculas ("taberna" encuentra "A Taberna do Bispo")
         Business probe = new Business();
         probe.setName(name);
         probe.setPriceRange(priceRange);
@@ -60,8 +67,22 @@ public class BusinessService {
     public BusinessDTO replaceBusiness(Long id, BusinessDTO business) {
         Business entity = businesses.findById(id).orElseThrow(() -> new NotFoundException("Business", id));
         copy(business, entity);
-        // No guardo, la entidad fue cargada en esta transaccion, así que Hibernate la guarda los cambios en el commit
+        // No guardo, la entidad fue cargada en esta transaccion, así que Hibernate guarda los cambios en el commit
         return toDTO(entity);
+    }
+
+
+    // PATCH solo cambia lo que dicen las operaciones. El negocio se convierte a su DTO, se le aplica el patch
+    // y el resultado se copia de vuelta a la entidad
+    @Transactional
+    public BusinessDTO updateBusiness(Long id, List<Map<String, Object>> updates) throws JsonPatchException {
+        Business entity = businesses.findById(id).orElseThrow(() -> new NotFoundException("Business", id));
+        BusinessDTO patched = patchUtils.applyPatch(toDTO(entity), updates, EDITABLE);
+
+        copy(patched, entity);
+
+        // saveAndFlush envia el UPDATE ahora, así que si el resultado es inválido, el error ocurre aquí
+        return toDTO(businesses.saveAndFlush(entity));
     }
 
     @Transactional
@@ -71,7 +92,9 @@ public class BusinessService {
         businesses.delete(entity);
     }
 
-    // Solo los campos que el cliente puede cambiar. id, averfaRating, RatingCount, owner y createdAt no.
+
+
+    // Solo los campos que el cliente puede cambiar. id, averageRating, ratingCount, owner y createdAt no.
     private void copy(BusinessDTO business, Business entity) {
         entity.setName(business.name());
         entity.setDescription(business.description());
@@ -83,7 +106,7 @@ public class BusinessService {
         entity.setTags(findTags(business.tags()));
     }
 
-    // El DTO tiene los nombres de las etiquetas, la entidad necesita las filas de Tag. Un tag desconodio es un 404
+    // El DTO tiene los nombres de las etiquetas, la entidad necesita las filas de Tag. Un tag desconocido es un 404
     private Set<Tag> findTags(Set<String> names) {
         Set<Tag> result = new HashSet<>();
         if (names != null) {

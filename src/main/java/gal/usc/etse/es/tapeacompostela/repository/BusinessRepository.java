@@ -12,11 +12,12 @@ import java.util.List;
 import java.util.Optional;
 
 public interface BusinessRepository extends JpaRepository<Business, Long> {
-    // Los locales que tienen tag, busca por Business.tags y los compada con Tag.id
+    // Los negocios que tienen el tag con ese id (consulta derivada sobre Business.tags.id)
     List<Business> findAllByTagsId(Long tagId);
 
-    // Los mismos métodos que JpaRepository, pero cargando las relaciones en la misma query en vez de una a mayores
-    // por local. La búsqueda solo hace eljoin con el owner.
+    // Los mismos métodos que JpaRepository, pero cargando las relaciones en la misma query en vez de una más
+    // por negocio. La búsqueda solo hace el join con el owner: un join con una colección (tags) obligaría
+    // a Hibernate a paginar en memoria
     @Override
     @EntityGraph(attributePaths = {"owner"})
     <S extends Business> Page<S> findAll(Example<S> example, Pageable pageable);

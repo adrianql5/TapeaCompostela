@@ -6,7 +6,7 @@ import lombok.*;
 import java.util.ArrayList;
 import java.util.List;
 
-// Algo que el negocio a cambio de puntos, 
+// Algo que el negocio ofrece a cambio de puntos,
 // por ejemplo una caña gratis por 30 puntos
 @Entity
 @Table(name = "rewards")

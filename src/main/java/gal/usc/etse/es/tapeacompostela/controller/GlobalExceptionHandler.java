@@ -1,8 +1,10 @@
 package gal.usc.etse.es.tapeacompostela.controller;
 
+import com.github.fge.jsonpatch.JsonPatchException;
 import gal.usc.etse.es.tapeacompostela.exception.ConflictException;
 import gal.usc.etse.es.tapeacompostela.exception.NotFoundException;
 import org.springframework.data.core.PropertyReferenceException;
+import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -37,7 +39,26 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return problem;
     }
 
-    // Ordenar dado un campo que no existe
+    // Un JSON Patch que no puede ser aplicado: un path que no existe, un campo que no puede ser modificado, etc.
+    @ExceptionHandler(JsonPatchException.class)
+    public ProblemDetail handlePatch(JsonPatchException ex) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.getMessage());
+        problem.setTitle("Invalid patch");
+        return problem;
+    }
+
+    // Una entidad rompe sus reglas de validación al ser guardada, por ejemplo un patch que deja el nombre vacío
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ProblemDetail handleConstraintViolation(ConstraintViolationException ex) {
+        Map<String, String> errors = new TreeMap<>();
+        ex.getConstraintViolations().forEach(violation -> errors.put(violation.getPropertyPath().toString(), violation.getMessage()));
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, "The resource would not be valid");
+        problem.setTitle("Invalid data");
+        problem.setProperty("errors", errors);
+        return problem;
+    }
+
+    // Ordenar por un campo que no existe
     @ExceptionHandler(PropertyReferenceException.class)
      public ProblemDetail handleWrongSort(PropertyReferenceException ex) {
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.getMessage());
@@ -45,7 +66,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return problem;
     }
 
-    // @Valid fallido, el ProblemDetail de Spring, y una propiedad extra "errores" con el mensaje de cada campo
+    // @Valid fallido, el ProblemDetail de Spring, y una propiedad extra "errors" con el mensaje de cada campo
     @Override
     protected ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException ex, HttpHeaders headers,
                                                                   HttpStatusCode status, WebRequest request) {

@@ -5,7 +5,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.web.SecurityFilterChain;
 
-// Configuración provisional para que cada petición pueda funcionar
+// Configuración provisional: permite todas las peticiones sin autenticación y desactiva CSRF
 @Configuration
 public class SecurityConfiguration {
 

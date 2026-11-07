@@ -44,7 +44,7 @@ public class User {
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    // N:N sin atributos propios, una tabla intermedia, user_roles
+    // N:N sin atributos propios, se guarda en la tabla intermedia user_roles
     @ManyToMany
     @JoinTable(name = "user_roles",
             joinColumns = @JoinColumn(name = "user_id"),

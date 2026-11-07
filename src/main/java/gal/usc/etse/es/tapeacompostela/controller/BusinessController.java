@@ -1,6 +1,7 @@
 package gal.usc.etse.es.tapeacompostela.controller;
 
 import com.fasterxml.jackson.annotation.JsonView;
+import com.github.fge.jsonpatch.JsonPatchException;
 import gal.usc.etse.es.tapeacompostela.model.dto.BusinessDTO;
 import gal.usc.etse.es.tapeacompostela.model.entity.Business.PriceRange;
 import gal.usc.etse.es.tapeacompostela.service.BusinessService;
@@ -17,7 +18,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
-
+import java.util.List;
+import java.util.Map;
 @RestController
 @RequestMapping("/businesses")
 @RequiredArgsConstructor
@@ -39,14 +41,14 @@ public class BusinessController {
         return businessService.getBusinesses(name, priceRange, PageRequest.of(page, size, Sort.by(direction, sort)));
     }
 
-    // Todos los campos de los negocios
+    // Un negocio con todos sus campos (vista Detail)
     @GetMapping("/{id}")
     @JsonView(BusinessDTO.Views.Detail.class)
     public BusinessDTO getBusiness(@PathVariable Long id) {
         return businessService.getBusiness(id);
     }
 
-    // 201 created con la cabecera de localización
+    // 201 Created con la cabecera Location apuntando al nuevo negocio
     @PostMapping
     public ResponseEntity<BusinessDTO> createBusiness(@RequestBody @Valid BusinessDTO business) {
         BusinessDTO created = businessService.createBusiness(business);
@@ -61,6 +63,14 @@ public class BusinessController {
     @PutMapping("/{id}")
     public BusinessDTO replaceBusiness(@PathVariable Long id, @RequestBody @Valid BusinessDTO business) {
         return businessService.replaceBusiness(id, business);
+    }
+
+
+    // El cuerpo es una lista de operaciones [{"op": "replace", "path": "/phone", "value": "981000000"}] 
+    @PatchMapping(path = "/{id}", consumes = "application/json-patch+json")
+    @JsonView(BusinessDTO.Views.Detail.class)
+    public BusinessDTO updateBusiness(@PathVariable Long id, @RequestBody List<Map<String, Object>> updates) throws JsonPatchException {
+        return businessService.updateBusiness(id, updates);
     }
 
     @DeleteMapping("/{id}")

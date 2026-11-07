@@ -33,7 +33,8 @@ public class TagService {
         return new TagDTO(saved.getId(), saved.getName());
     }
 
-    // Los negocios que ya tenian tags los pierden primero, las filas de business_tags apuntan al tag
+    // Primero se quita el tag de los negocios que lo tienen: las filas de business_tags apuntan a él
+    // y la clave foránea impediría borrarlo
     @Transactional
     public void deleteTag(Long id) {
         Tag tag = tags.findById(id).orElseThrow(() -> new NotFoundException("Tag", id));

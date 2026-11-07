@@ -3,7 +3,7 @@ package gal.usc.etse.es.tapeacompostela.model.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
-// "Vinos", "Pulpo", "Casco histórico"... Un negocio puede tener varios tags en varios negocios
+// "Vinos", "Pulpo", "Casco histórico"... Un negocio puede tener varios tags y un tag puede estar en varios negocios
 @Entity
 @Table(name = "tags")
 @Getter

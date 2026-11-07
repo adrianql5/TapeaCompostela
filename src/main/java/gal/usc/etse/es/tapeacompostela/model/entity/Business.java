@@ -1,6 +1,8 @@
 package gal.usc.etse.es.tapeacompostela.model.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.CreationTimestamp;
@@ -24,19 +26,24 @@ public class Business {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    // Hibernate comprueba esto antes de guardar, así un PATCH no puede dejar un negocio sin datos obligatorios
     @Column(nullable = false, length = 150)
+    @NotBlank
     private String name;
 
     @Column(length = 2000)
     private String description;
 
     @Column(nullable = false)
+    @NotBlank
     private String address;
 
     @Column(nullable = false)
+    @NotBlank
     private Double latitude;
 
     @Column(nullable = false)
+    @NotBlank
     private Double longitude;
 
     @Enumerated(EnumType.STRING)
@@ -61,7 +68,7 @@ public class Business {
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    // La tabla de nogicos tiene la columna owner_id, con LAZY el owner solo se carga si se usa
+    // La tabla de negocios tiene la columna owner_id, con LAZY el owner solo se carga si se usa
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "owner_id")
     private User owner;
@@ -73,8 +80,8 @@ public class Business {
     @Builder.Default
     private Set<Tag> tags = new HashSet<>();
 
-    // Las reseñas y recomendas del negocio. Si se borra el negocio las borra tambein (en cascada)
-    // y al borrar una de la lista las borra de la base de datos (orphanRemoval)
+    // Las reseñas y recompensas del negocio. Si se borra el negocio se borran también (en cascada)
+    // y al quitar una de la lista se borra de la base de datos (orphanRemoval)
     @OneToMany(mappedBy = "business", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<Review> reviews = new ArrayList<>();

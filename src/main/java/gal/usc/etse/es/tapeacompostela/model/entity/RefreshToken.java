@@ -6,7 +6,7 @@ import lombok.*;
 import java.time.Instant;
 
 // Un token opaco que permite al cliente obtener un nuevo JWT sin la contraseña
-// Se usa unca vez: cuando se usa o cuando el usuario hace log out, se marca como revocado
+// Se usa una vez: cuando se usa o cuando el usuario hace log out, se marca como revocado
 @Entity
 @Table(name = "refresh_tokens")
 @Getter

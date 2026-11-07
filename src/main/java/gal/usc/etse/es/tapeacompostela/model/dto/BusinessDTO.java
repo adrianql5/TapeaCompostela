@@ -10,9 +10,9 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Set;
 
-// Cómo se ve un neogcio en el JSON de la API. id,
-// avergaRating, ratingCount, owner y createdAt se rellenan en el servidor,
-// si el cliente los manda se ingoran
+// Cómo se ve un negocio en el JSON de la API. id,
+// averageRating, ratingCount, owner y createdAt se rellenan en el servidor,
+// si el cliente los manda se ignoran
 public record BusinessDTO(
         @JsonView(Views.Summary.class) Long id,
         @JsonView(Views.Summary.class) @NotBlank @Size(max = 150) String name,
@@ -30,9 +30,9 @@ public record BusinessDTO(
         @JsonView(Views.Detail.class) String owner,
         @JsonView(Views.Detail.class) LocalDateTime createdAt)
 {
-        // Summary: los campos de la lista (GET /business)
-        // Detail: todos (GET /business/{id})
-        // Detail exteinde a Summary, por lo que lo tiene los campos marcados con Summary
+        // Summary: los campos de la lista (GET /businesses)
+        // Detail: todos (GET /businesses/{id})
+        // Detail extiende a Summary, por lo que también incluye los campos marcados con Summary
         public interface Views{
                 interface Summary{}
                 interface Detail extends Summary{}
