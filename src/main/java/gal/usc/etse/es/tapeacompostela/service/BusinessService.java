@@ -6,12 +6,15 @@ import gal.usc.etse.es.tapeacompostela.model.entity.Business;
 import gal.usc.etse.es.tapeacompostela.model.entity.Tag;
 import gal.usc.etse.es.tapeacompostela.repository.BusinessRepository;
 import gal.usc.etse.es.tapeacompostela.repository.TagRepository;
+import gal.usc.etse.es.tapeacompostela.repository.UserRepository;
 import com.github.fge.jsonpatch.JsonPatchException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.ExampleMatcher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.prepost.PostAuthorize;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,6 +33,7 @@ public class BusinessService {
     private final BusinessRepository businesses;
     private final TagRepository tags;
     private final PatchUtils patchUtils;
+    private final UserRepository users;
 
     // Los campos que un PATCH puede cambiar
     private static final Set<String> EDITABLE = Set.of("name", "description", "address", "latitude", "longitude", "priceRange", "phone", "tags");
@@ -54,16 +58,22 @@ public class BusinessService {
         return businesses.findById(id).map(this::toDTO).orElseThrow(() -> new NotFoundException("Business", id));
     }
 
+    // Solo propietarios y admins pueden crear negocios. El propietario es el usuario que hace la request, nunca el del JSON
     @Transactional
-    public BusinessDTO createBusiness(BusinessDTO business) {
+    @PreAuthorize("hasRole('OWNER') or hasRole('ADMIN')")
+    public BusinessDTO createBusiness(BusinessDTO business, String username) {
         Business entity = new Business();
         copy(business, entity);
+        entity.setOwner(users.findByUsername(username).orElseThrow(() -> new NotFoundException("User", username)));
         return toDTO(businesses.save(entity));
     }
 
     // PUT reemplaza el negocio entero, cada campo tiene el valor que se le pasa en el nuevo negocio
     // si falta algun dato se pone a null
+    // @PostAuthorize comprueba el resultado: el negocio debe ser del usuario logueado (o ser admin)
+    // Si no, 403, y la transacción deshace el cambio
     @Transactional
+    @PostAuthorize("returnObject.owner() == authentication.name or hasRole('ADMIN')")
     public BusinessDTO replaceBusiness(Long id, BusinessDTO business) {
         Business entity = businesses.findById(id).orElseThrow(() -> new NotFoundException("Business", id));
         copy(business, entity);
@@ -75,6 +85,7 @@ public class BusinessService {
     // PATCH solo cambia lo que dicen las operaciones. El negocio se convierte a su DTO, se le aplica el patch
     // y el resultado se copia de vuelta a la entidad
     @Transactional
+    @PostAuthorize("returnObject.owner() == authentication.name or hasRole('ADMIN')")
     public BusinessDTO updateBusiness(Long id, List<Map<String, Object>> updates) throws JsonPatchException {
         Business entity = businesses.findById(id).orElseThrow(() -> new NotFoundException("Business", id));
         BusinessDTO patched = patchUtils.applyPatch(toDTO(entity), updates, EDITABLE);
@@ -85,11 +96,14 @@ public class BusinessService {
         return toDTO(businesses.saveAndFlush(entity));
     }
 
+    // Devuelve el negocio borrado para que @PostAuthorize pueda comprobar su dueño
     @Transactional
-    public void deleteBusiness(Long id) {
+    @PostAuthorize("returnObject.owner() == authentication.name or hasRole('ADMIN')")
+    public BusinessDTO deleteBusiness(Long id) {
         Business entity = businesses.findById(id).orElseThrow(() -> new NotFoundException("Business", id));
         // Sus reseñas y recompensas se borran tambien
         businesses.delete(entity);
+        return toDTO(entity);
     }
 
 

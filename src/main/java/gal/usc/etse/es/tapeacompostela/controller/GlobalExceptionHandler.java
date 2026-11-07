@@ -10,6 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -39,7 +40,15 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return problem;
     }
 
-    // Un JSON Patch que no puede ser aplicado: un path que no existe, un campo que no puede ser modificado, etc.
+    // Username o contraseña incorrecta en el login, o un refresh token no válido (401)
+    @ExceptionHandler(AuthenticationException.class)
+    public ProblemDetail handleAuthentication(AuthenticationException ex) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.UNAUTHORIZED, ex.getMessage());
+        problem.setTitle("Authentication failed");
+        return problem;
+    }
+
+    // Un JSON Patch que no se puede aplicar: un path que no existe, un campo que no se puede modificar
     @ExceptionHandler(JsonPatchException.class)
     public ProblemDetail handlePatch(JsonPatchException ex) {
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.getMessage());
@@ -47,7 +56,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return problem;
     }
 
-    // Una entidad rompe sus reglas de validación al ser guardada, por ejemplo un patch que deja el nombre vacío
+    // Una entidad rompe sus reglas de validación cuando se guarda, por ejemplo un PATCH que deja el nombre vacío
     @ExceptionHandler(ConstraintViolationException.class)
     public ProblemDetail handleConstraintViolation(ConstraintViolationException ex) {
         Map<String, String> errors = new TreeMap<>();

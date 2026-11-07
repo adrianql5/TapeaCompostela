@@ -8,6 +8,7 @@ import gal.usc.etse.es.tapeacompostela.repository.BusinessRepository;
 import gal.usc.etse.es.tapeacompostela.repository.TagRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,6 +26,7 @@ public class TagService {
     }
 
     @Transactional
+    @PreAuthorize("hasRole('ADMIN')")
     public TagDTO createTag(TagDTO tag) {
         if (tags.existsByName(tag.name())) {
             throw new ConflictException("Tag " + tag.name() + " already exists");
@@ -36,6 +38,7 @@ public class TagService {
     // Primero se quita el tag de los negocios que lo tienen: las filas de business_tags apuntan a él
     // y la clave foránea impediría borrarlo
     @Transactional
+    @PreAuthorize("hasRole('ADMIN')")
     public void deleteTag(Long id) {
         Tag tag = tags.findById(id).orElseThrow(() -> new NotFoundException("Tag", id));
         businesses.findAllByTagsId(id).forEach(business -> business.getTags().remove(tag));

@@ -14,6 +14,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
@@ -50,8 +51,8 @@ public class BusinessController {
 
     // 201 Created con la cabecera Location apuntando al nuevo negocio
     @PostMapping
-    public ResponseEntity<BusinessDTO> createBusiness(@RequestBody @Valid BusinessDTO business) {
-        BusinessDTO created = businessService.createBusiness(business);
+    public ResponseEntity<BusinessDTO> createBusiness(@RequestBody @Valid BusinessDTO business, Authentication authentication) {
+        BusinessDTO created = businessService.createBusiness(business, authentication.getName());
         URI location = ServletUriComponentsBuilder
                 .fromCurrentRequest()
                 .path("/{id}")
