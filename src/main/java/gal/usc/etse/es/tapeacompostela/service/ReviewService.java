@@ -3,6 +3,7 @@ package gal.usc.etse.es.tapeacompostela.service;
 import gal.usc.etse.es.tapeacompostela.event.ReviewCreatedEvent;
 import gal.usc.etse.es.tapeacompostela.exception.ConflictException;
 import gal.usc.etse.es.tapeacompostela.exception.NotFoundException;
+import gal.usc.etse.es.tapeacompostela.model.dto.ReviewCursorPageDTO;
 import gal.usc.etse.es.tapeacompostela.model.dto.ReviewDTO;
 import gal.usc.etse.es.tapeacompostela.model.entity.Business;
 import gal.usc.etse.es.tapeacompostela.model.entity.Review;
@@ -11,8 +12,7 @@ import gal.usc.etse.es.tapeacompostela.repository.ReviewRepository;
 import gal.usc.etse.es.tapeacompostela.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Limit;
 import org.springframework.security.access.prepost.PostAuthorize;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
@@ -20,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -30,11 +31,20 @@ public class ReviewService {
     private final UserRepository users;
     private final ApplicationEventPublisher eventPublisher;
 
-    public Page<ReviewDTO> getReviews(Long businessId, Pageable page) {
+    // Paginación por cursor: en vez del número de página, el cliente manda el id de la última reseña que recibió
+    // y obtiene las siguientes. No hace falta un COUNT, y las reseñas nuevas no desplazan a las que vienen después
+    public ReviewCursorPageDTO getReviews(Long businessId, Long cursor, int limit) {
         if (!businesses.existsById(businessId)) {
             throw new NotFoundException("Business", businessId);
         }
-        return reviews.findAllByBusinessId(businessId, page).map(this::toDTO);
+        List<ReviewDTO> data = (cursor == null
+                ? reviews.findByBusinessIdOrderByIdDesc(businessId, Limit.of(limit))
+                : reviews.findByBusinessIdAndIdLessThanOrderByIdDesc(businessId, cursor, Limit.of(limit)))
+                .stream().map(this::toDTO).toList();
+
+        // El cursor de la siguiente llamada es el id de la última reseña; si esta página no está llena, no hay más
+        Long nextCursor = data.size() == limit ? data.getLast().id() : null;
+        return new ReviewCursorPageDTO(data, nextCursor);
     }
 
     public ReviewDTO getReview(Long id) {

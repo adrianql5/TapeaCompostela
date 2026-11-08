@@ -1,5 +1,6 @@
 package gal.usc.etse.es.tapeacompostela.controller;
 
+import gal.usc.etse.es.tapeacompostela.model.dto.ReviewCursorPageDTO;
 import gal.usc.etse.es.tapeacompostela.model.dto.ReviewDTO;
 import gal.usc.etse.es.tapeacompostela.service.ReviewService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -8,9 +9,6 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -28,15 +26,16 @@ import java.net.URI;
 public class ReviewController {
     private final ReviewService reviewService;
 
-    // Las reseñas de un negocio, la más nueva primero
-    @Operation(summary = "The reviews of a business, the newest first")
+    // Las reseñas de un negocio, la más nueva primero, con paginación por cursor: GET /reviews?business=1&limit=2 y después
+    // GET /reviews?business=1&limit=2&cursor=<nextCursor de la respuesta anterior>
+    @Operation(summary = "The reviews of a business with cursor pagination, the newest first")
     @GetMapping
-    public Page<ReviewDTO> getReviews(
+    public ReviewCursorPageDTO getReviews(
             @RequestParam Long business,
-            @RequestParam(defaultValue = "0") @Min(0) int page,
-            @RequestParam(defaultValue = "10") @Min(1) @Max(50) int size
+            @RequestParam(required = false) Long cursor,
+            @RequestParam(defaultValue = "10") @Min(1) @Max(50) int limit
     ) {
-        return reviewService.getReviews(business, PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt")));
+        return reviewService.getReviews(business, cursor, limit);
     }
 
     // El negocio va en el cuerpo: {"businessId": 3, "rating": 4, "comment": "..."}
