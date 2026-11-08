@@ -61,8 +61,8 @@ public class SecurityConfiguration {
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/**").permitAll()
-                        // Cualquiera puede leer los negocios y los tags, el resto necesita un token
-                        .requestMatchers(HttpMethod.GET, "/businesses/**", "/tags").permitAll()
+                        // Cualquiera puede leer los negocios, tags y reseñas, el resto necesita un token
+                        .requestMatchers(HttpMethod.GET, "/businesses/**", "/tags", "/reviews", "/reviews/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 // El filtro de Spring que lee "Authorization: Bearer <token>" y comprueba el JWT con el JwtDecoder
