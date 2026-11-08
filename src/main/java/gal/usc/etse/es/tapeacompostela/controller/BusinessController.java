@@ -108,8 +108,8 @@ public class BusinessController {
         return businessService.replaceBusiness(id, business);
     }
 
-    // Las tres lecturas empiezan en el mismo instante, y la respuesta espera por todas ellas
-    // le lleva tanto como le lleve a la mas lenta
+    // Las tres lecturas empiezan a la vez, cada una en su hilo, y allOf espera a que terminen todas:
+    // la respuesta tarda lo que la más lenta, no la suma de las tres
     @Operation(summary = "A business with its 3 newest reviews and its rewards, read in parallel")
     @GetMapping("/{id}/summary")
     public BusinessSummaryDTO getSummary(@PathVariable Long id) throws InterruptedException, ExecutionException {
@@ -121,7 +121,7 @@ public class BusinessController {
         return new BusinessSummaryDTO(business.get(), reviews.get(), rewards.get());
     }
 
-    // El cuerpo es una lista de operaciones [{"op": "replace", "path": "/phone", "value": "981000000"}] 
+    // El cuerpo es una lista de operaciones [{"op": "replace", "path": "/phone", "value": "981000000"}]
     @Operation(summary = "Change some fields of a business with JSON Patch (its owner or an admin)")
     @PatchMapping(path = "/{id}", consumes = "application/json-patch+json")
     @JsonView(BusinessDTO.Views.Detail.class)

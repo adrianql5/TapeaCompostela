@@ -1,5 +1,5 @@
--- Roles y usuarios. Cada usuario tiene las contraseña "password"
--- lo que hay insertado es el hash de ejmeplo de la documentacion de Spring Security 
+-- Roles y usuarios. Cada usuario tiene la contraseña "password"
+-- lo que hay insertado es el hash de ejemplo de la documentación de Spring Security
 INSERT INTO roles (name) VALUES ('USER'), ('OWNER'), ('ADMIN');
 
 INSERT INTO users (username, name, email, password, points, created_at) VALUES

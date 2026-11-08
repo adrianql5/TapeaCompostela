@@ -7,7 +7,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import java.time.LocalDateTime;
 
 // Una recompensa comprada con puntos. El usuario enseña el código en el negocio
-// y el propietario lo marca como canjeado.
+// y el propietario lo marca como usado (USED)
 @Entity
 @Table(name = "redemptions")
 @Getter

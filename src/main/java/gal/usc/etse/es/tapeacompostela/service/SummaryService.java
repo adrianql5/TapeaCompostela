@@ -11,8 +11,10 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-// Tres lecturas independinetens que pueden ejecutarse al mismo tiempo, cada una en su poropio hilo (@Async)
-// Cada método devuelve de una vez CompletableFuture
+// Tres lecturas independientes que se pueden ejecutar a la vez, cada una en su propio hilo (@Async).
+// Cada método devuelve enseguida un CompletableFuture, que tendrá el resultado cuando el hilo termine.
+// Tienen que estar en otro bean: si el controlador llamase a un método @Async de sí mismo, no pasaría por el
+// proxy de Spring y se ejecutaría en el mismo hilo
 @Slf4j
 @Service
 @RequiredArgsConstructor

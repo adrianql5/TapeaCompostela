@@ -26,8 +26,8 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-// Read only por defecto
-// Los métodos que escriben lo sobreescriben con @Transactional
+// Solo lectura por defecto (readOnly).
+// Los métodos que escriben lo sobrescriben con su propio @Transactional
 @Transactional(readOnly = true)
 public class BusinessService {
     private final BusinessRepository businesses;
@@ -69,7 +69,7 @@ public class BusinessService {
     }
 
     // PUT reemplaza el negocio entero, cada campo tiene el valor que se le pasa en el nuevo negocio
-    // si falta algun dato se pone a null
+    // si falta algún dato se pone a null
     // @PostAuthorize comprueba el resultado: el negocio debe ser del usuario logueado (o ser admin)
     // Si no, 403, y la transacción deshace el cambio
     @Transactional
@@ -77,7 +77,7 @@ public class BusinessService {
     public BusinessDTO replaceBusiness(Long id, BusinessDTO business) {
         Business entity = businesses.findById(id).orElseThrow(() -> new NotFoundException("Business", id));
         copy(business, entity);
-        // No guardo, la entidad fue cargada en esta transaccion, así que Hibernate guarda los cambios en el commit
+        // No guardo, la entidad fue cargada en esta transacción, así que Hibernate guarda los cambios en el commit
         return toDTO(entity);
     }
 
@@ -92,7 +92,7 @@ public class BusinessService {
 
         copy(patched, entity);
 
-        // saveAndFlush envia el UPDATE ahora, así que si el resultado es inválido, el error ocurre aquí
+        // saveAndFlush envía el UPDATE ahora, así que si el resultado es inválido, el error ocurre aquí
         return toDTO(businesses.saveAndFlush(entity));
     }
 
@@ -101,7 +101,7 @@ public class BusinessService {
     @PostAuthorize("returnObject.owner() == authentication.name or hasRole('ADMIN')")
     public BusinessDTO deleteBusiness(Long id) {
         Business entity = businesses.findById(id).orElseThrow(() -> new NotFoundException("Business", id));
-        // Sus reseñas y recompensas se borran tambien
+        // Sus reseñas y recompensas se borran también
         businesses.delete(entity);
         return toDTO(entity);
     }

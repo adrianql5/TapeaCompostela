@@ -13,7 +13,7 @@ FROM (VALUES
 JOIN users u ON u.username = v.username
 JOIN businesses b ON b.name = v.business;
 
--- La media y el nuemero de reseñas de cada negocio
+-- La media y el número de reseñas de cada negocio
 UPDATE businesses b SET
     rating_count = (SELECT COUNT(*) FROM reviews r WHERE r.business_id = b.id),
     average_rating = COALESCE((SELECT ROUND(AVG(r.rating), 2) FROM reviews r WHERE r.business_id = b.id), 0);

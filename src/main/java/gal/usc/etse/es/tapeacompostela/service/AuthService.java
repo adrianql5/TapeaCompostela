@@ -72,7 +72,7 @@ public class AuthService {
                 new UsernamePasswordAuthenticationToken(credentials.username(), credentials.password())
         );
 
-        // El usuario es valido: sus roles van en el token sin el prefijo (ROLE_USER -> USER)
+        // El usuario es válido: sus roles van en el token sin el prefijo (ROLE_USER -> USER)
         // Spring Security 7 también añade una autoridad FACTOR_PASSWORD (cómo se autenticó el usuario):
         // no es un rol, así que solo se mantienen las que empiezan por ROLE_
         List<String> userRoles = auth.getAuthorities().stream()

@@ -6,7 +6,7 @@ import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
-@EnableAsync // Activa @Async (lo usa PointsEventListener)
+@EnableAsync // Activa @Async (lo usan PointsEventListener y SummaryService)
 @EnableScheduling // Activa @Scheduled (lo usa RedemptionExpiryJob)
 @EnableCaching // Activa @Cacheable y @CacheEvict (los usa TagService)
 @SpringBootApplication

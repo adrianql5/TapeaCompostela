@@ -15,7 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.stream.Collectors;
 
 // UserDetailsService le dice a Spring Security cómo encontrar a un usuario en la
-// base de datos. El AuthenticationManager llama a loadUserByUsername durante el 
+// base de datos. El AuthenticationManager llama a loadUserByUsername durante el
 // login y compara la contraseña con el hash
 @Service
 @RequiredArgsConstructor
