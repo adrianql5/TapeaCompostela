@@ -8,7 +8,7 @@ FROM (VALUES
 ) AS v (business, title, description, cost, active)
 JOIN businesses b ON b.name = v.business;
 
--- Una reclamación pendiente, para ver los códigos y que el trabajo que los termina
+-- Un canje pendiente de maria_tapas, para ver los códigos y la tarea que los caduca (RedemptionExpiryJob)
 INSERT INTO redemptions (user_id, reward_id, code, status, redeemed_at)
 SELECT u.id, r.id, 'TPC-7K2M9Q', 'PENDING', NOW() - INTERVAL '2 days'
 FROM users u, rewards r

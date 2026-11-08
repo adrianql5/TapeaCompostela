@@ -1,5 +1,6 @@
 package gal.usc.etse.es.tapeacompostela.service;
 
+import gal.usc.etse.es.tapeacompostela.event.ReviewCreatedEvent;
 import gal.usc.etse.es.tapeacompostela.exception.ConflictException;
 import gal.usc.etse.es.tapeacompostela.exception.NotFoundException;
 import gal.usc.etse.es.tapeacompostela.model.dto.ReviewDTO;
@@ -9,6 +10,7 @@ import gal.usc.etse.es.tapeacompostela.repository.BusinessRepository;
 import gal.usc.etse.es.tapeacompostela.repository.ReviewRepository;
 import gal.usc.etse.es.tapeacompostela.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PostAuthorize;
@@ -26,6 +28,7 @@ public class ReviewService {
     private final ReviewRepository reviews;
     private final BusinessRepository businesses;
     private final UserRepository users;
+    private final ApplicationEventPublisher eventPublisher;
 
     public Page<ReviewDTO> getReviews(Long businessId, Pageable page) {
         if (!businesses.existsById(businessId)) {
@@ -56,6 +59,8 @@ public class ReviewService {
                 .comment(review.comment())
                 .build());
         updateRating(business);
+        // Anuncia lo que ha pasado: quien escuche el evento (PointsEventListener) da los puntos. ReviewService no sabe quién lo escucha
+        eventPublisher.publishEvent(new ReviewCreatedEvent(saved.getId(), username, businessId));
         return toDTO(saved);
     }
 
