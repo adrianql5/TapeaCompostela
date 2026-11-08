@@ -2,6 +2,8 @@ package gal.usc.etse.es.tapeacompostela.controller;
 
 import gal.usc.etse.es.tapeacompostela.model.dto.ReviewDTO;
 import gal.usc.etse.es.tapeacompostela.service.ReviewService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -19,6 +21,7 @@ import java.net.URI;
 
 // Las reseñas son una colección propia: /reviews, y cada una /reviews/{id}. El negocio es un filtro de la
 // colección (?business=3) y un campo del cuerpo al crear una, no forma parte del path
+@Tag(name = "Reviews", description = "The reviews of the businesses")
 @RestController
 @RequestMapping("/reviews")
 @RequiredArgsConstructor
@@ -26,6 +29,7 @@ public class ReviewController {
     private final ReviewService reviewService;
 
     // Las reseñas de un negocio, la más nueva primero
+    @Operation(summary = "The reviews of a business, the newest first")
     @GetMapping
     public Page<ReviewDTO> getReviews(
             @RequestParam Long business,
@@ -36,6 +40,7 @@ public class ReviewController {
     }
 
     // El negocio va en el cuerpo: {"businessId": 3, "rating": 4, "comment": "..."}
+    @Operation(summary = "Review a business (once per user). Gives 10 points")
     @PostMapping
     public ResponseEntity<ReviewDTO> createReview(@RequestBody @Valid ReviewDTO review, Authentication authentication) {
         ReviewDTO created = reviewService.createReview(review, authentication.getName());
@@ -46,11 +51,13 @@ public class ReviewController {
         return ResponseEntity.created(location).body(created);
     }
 
+    @Operation(summary = "One review")
     @GetMapping("/{id}")
     public ReviewDTO getReview(@PathVariable Long id) {
         return reviewService.getReview(id);
     }
 
+    @Operation(summary = "Delete a review (its author or an admin)")
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteReview(@PathVariable Long id) {

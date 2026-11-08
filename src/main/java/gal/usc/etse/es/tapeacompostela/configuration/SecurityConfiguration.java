@@ -61,6 +61,8 @@ public class SecurityConfiguration {
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/**").permitAll()
+                        // La documentación: el documento de OpenAPI y Swagger UI
+                        .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         // Cualquiera puede leer los negocios, las etiquetas, las reseñas y las recompensas; el resto necesita un token
                         .requestMatchers(HttpMethod.GET, "/businesses/**", "/tags", "/reviews", "/reviews/**", "/rewards", "/rewards/**").permitAll()
                         .anyRequest().authenticated()

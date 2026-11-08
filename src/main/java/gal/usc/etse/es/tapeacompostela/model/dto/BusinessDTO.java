@@ -2,6 +2,7 @@ package gal.usc.etse.es.tapeacompostela.model.dto;
 
 import com.fasterxml.jackson.annotation.JsonView;
 import gal.usc.etse.es.tapeacompostela.model.entity.Business.PriceRange;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -13,8 +14,11 @@ import java.util.Set;
 // Cómo se ve un negocio en el JSON de la API. id,
 // averageRating, ratingCount, owner y createdAt se rellenan en el servidor,
 // si el cliente los manda se ignoran
+@Schema(description = "A tapas bar")
 public record BusinessDTO(
+        @Schema(description = "Identifier of the business", example = "1", accessMode = Schema.AccessMode.READ_ONLY)
         @JsonView(Views.Summary.class) Long id,
+        @Schema(description = "Name of the business", example = "O Gato Negro")
         @JsonView(Views.Summary.class) @NotBlank @Size(max = 150) String name,
         @JsonView(Views.Detail.class) @Size(max = 2000) String description,
         @JsonView(Views.Summary.class) @NotBlank String address,
@@ -22,11 +26,15 @@ public record BusinessDTO(
         @JsonView(Views.Detail.class) @NotNull Double longitude,
         @JsonView(Views.Summary.class) PriceRange priceRange,
         @JsonView(Views.Detail.class) @Size(max = 20) String phone,
+        @Schema(description = "Average of its reviews, from 1 to 5", example = "4.50", accessMode = Schema.AccessMode.READ_ONLY)
         @JsonView(Views.Summary.class) BigDecimal averageRating,
+        @Schema(description = "Number of reviews", example = "2", accessMode = Schema.AccessMode.READ_ONLY)
         @JsonView(Views.Summary.class) Integer ratingCount,
         // Los nombres de los tags
+        @Schema(description = "Names of its tags", example = "[\"Vinos\", \"Tapa gratis\"]")
         @JsonView(Views.Summary.class) Set<String> tags,
         // El nombre de usuario del propietario
+        @Schema(description = "Username of its owner", example = "hugoocoto", accessMode = Schema.AccessMode.READ_ONLY)
         @JsonView(Views.Detail.class) String owner,
         @JsonView(Views.Detail.class) LocalDateTime createdAt)
 {
