@@ -3,8 +3,12 @@ package gal.usc.etse.es.tapeacompostela.controller;
 import com.fasterxml.jackson.annotation.JsonView;
 import com.github.fge.jsonpatch.JsonPatchException;
 import gal.usc.etse.es.tapeacompostela.model.dto.BusinessDTO;
+import gal.usc.etse.es.tapeacompostela.model.dto.BusinessSummaryDTO;
+import gal.usc.etse.es.tapeacompostela.model.dto.ReviewDTO;
+import gal.usc.etse.es.tapeacompostela.model.dto.RewardDTO;
 import gal.usc.etse.es.tapeacompostela.model.entity.Business.PriceRange;
 import gal.usc.etse.es.tapeacompostela.service.BusinessService;
+import gal.usc.etse.es.tapeacompostela.service.SummaryService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -29,6 +33,8 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
 @Tag(name = "Businesses", description = "Search, read and manage the businesses")
 @RestController
@@ -36,6 +42,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class BusinessController {
     private final BusinessService businessService;
+    private final SummaryService summaryService;
 
     // GET /businesses?name=taberna&priceRange=MODERATE&page=0&size=5&sort=averageRating&direction=DESC
     // Cada parámetro es opcional. La respuesta es una página de negocios, con los campos de la vista de resumen
@@ -99,6 +106,19 @@ public class BusinessController {
     @PutMapping("/{id}")
     public BusinessDTO replaceBusiness(@PathVariable Long id, @RequestBody @Valid BusinessDTO business) {
         return businessService.replaceBusiness(id, business);
+    }
+
+    // Las tres lecturas empiezan en el mismo instante, y la respuesta espera por todas ellas
+    // le lleva tanto como le lleve a la mas lenta
+    @Operation(summary = "A business with its 3 newest reviews and its rewards, read in parallel")
+    @GetMapping("/{id}/summary")
+    public BusinessSummaryDTO getSummary(@PathVariable Long id) throws InterruptedException, ExecutionException {
+        CompletableFuture<BusinessDTO> business = summaryService.getBusiness(id);
+        CompletableFuture<List<ReviewDTO>> reviews = summaryService.getLatestReviews(id);
+        CompletableFuture<List<RewardDTO>> rewards = summaryService.getRewards(id);
+
+        CompletableFuture.allOf(business, reviews, rewards).join();
+        return new BusinessSummaryDTO(business.get(), reviews.get(), rewards.get());
     }
 
     // El cuerpo es una lista de operaciones [{"op": "replace", "path": "/phone", "value": "981000000"}] 
