@@ -18,6 +18,10 @@ public interface RedemptionRepository extends JpaRepository<Redemption, Long> {
     @EntityGraph(attributePaths = {"user", "reward", "reward.business", "reward.business.owner"})
     Optional<Redemption> findById(Long id);
 
+    // El canje creado con una Idempotency-Key, si existe. Lo usa RewardService.redeem
+    @EntityGraph(attributePaths = {"user", "reward", "reward.business"})
+    Optional<Redemption> findByIdempotencyKey(String idempotencyKey);
+
     // Los canjes en un estado y anteriores a un momento: con PENDING y la fecha límite, los que han caducado.
     // Lo usa RedemptionExpiryJob
     List<Redemption> findAllByStatusAndRedeemedAtBefore(Status status, LocalDateTime moment);

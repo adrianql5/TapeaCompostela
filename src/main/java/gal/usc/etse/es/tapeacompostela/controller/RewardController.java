@@ -51,11 +51,14 @@ public class RewardController {
     }
 
     // Canjear una recompensa es crear un canje de ella (sin verbos en la URL): {"rewardId": 2}.
-    // El usuario es el del token, nunca el del cuerpo
+    // El usuario es el del token, nunca el del cuerpo.
+    // Cabecera Idempotency-Key (opcional): un valor que elige el cliente, por ejemplo un UUID, distinto para cada canje
+    // nuevo y el mismo cuando repite uno. Repetir el POST con la misma clave devuelve el mismo canje
     @Operation(summary = "Spend points on a reward: gives a code to show at the business")
     @PostMapping("/redemptions")
-    public ResponseEntity<RedemptionDTO> redeem(@RequestBody @Valid RedemptionDTO redemption, Authentication authentication) {
-        RedemptionDTO created = rewardService.redeem(redemption.rewardId(), authentication.getName());
+    public ResponseEntity<RedemptionDTO> redeem(@RequestBody @Valid RedemptionDTO redemption, Authentication authentication,
+                                                @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey) {
+        RedemptionDTO created = rewardService.redeem(redemption.rewardId(), authentication.getName(), idempotencyKey);
         URI location = ServletUriComponentsBuilder.fromCurrentRequest()
                 .path("/{id}")
                 .buildAndExpand(created.id())

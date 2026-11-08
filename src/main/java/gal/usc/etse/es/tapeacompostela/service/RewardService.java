@@ -70,9 +70,22 @@ public class RewardService {
 
     // Dos cambios que van juntos: los puntos del usuario bajan y se crea el canje.
     // Los dos en una transacción: si uno falla, no se guarda ninguno
+    // idempotencyKey (opcional): si ya hay un canje creado con esta clave, se devuelve tal cual,
+    // sin gastar puntos otra vez. Así la app puede repetir el POST cuando falla la red sin pagar dos veces
     @Transactional
     @PreAuthorize("hasRole('USER')")
-    public RedemptionDTO redeem(Long rewardId, String username) {
+    public RedemptionDTO redeem(Long rewardId, String username, String idempotencyKey) {
+        if (idempotencyKey != null) {
+            var previous = redemptions.findByIdempotencyKey(idempotencyKey);
+            if (previous.isPresent()) {
+                // La misma clave de otro usuario, o para otra recompensa, es una petición distinta: se rechaza
+                if (!previous.get().getUser().getUsername().equals(username) || !previous.get().getReward().getId().equals(rewardId)) {
+                    throw new ConflictException("The Idempotency-Key " + idempotencyKey + " was used for another request");
+                }
+                return toDTO(previous.get());
+            }
+        }
+
         Reward reward = rewards.findById(rewardId).orElseThrow(() -> new NotFoundException("Reward", rewardId));
         if (!reward.isActive()) {
             throw new ConflictException("Reward " + rewardId + " is not active");
@@ -88,6 +101,7 @@ public class RewardService {
                 .reward(reward)
                 // Por ejemplo TPC-3F9A1C2B: 8 caracteres aleatorios de un UUID
                 .code("TPC-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase())
+                .idempotencyKey(idempotencyKey)
                 .build());
         return toDTO(saved);
     }

@@ -43,6 +43,10 @@ public class Redemption {
     @Column(name = "used_at")
     private LocalDateTime usedAt;
 
+    // La Idempotency-Key que el cliente manda con el POST. Es única: la misma clave nunca crea dos canjes
+    @Column(name = "idempotency_key", unique = true, length = 100)
+    private String idempotencyKey;
+
     public enum Status {
         PENDING, USED, EXPIRED
     }
