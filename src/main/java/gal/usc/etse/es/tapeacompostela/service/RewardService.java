@@ -5,6 +5,7 @@ import gal.usc.etse.es.tapeacompostela.exception.ConflictException;
 import gal.usc.etse.es.tapeacompostela.exception.NotEnoughPointsException;
 import gal.usc.etse.es.tapeacompostela.exception.NotFoundException;
 import gal.usc.etse.es.tapeacompostela.model.dto.RedemptionDTO;
+import gal.usc.etse.es.tapeacompostela.model.dto.RedemptionQrDTO;
 import gal.usc.etse.es.tapeacompostela.model.dto.RewardDTO;
 import gal.usc.etse.es.tapeacompostela.model.entity.Business;
 import gal.usc.etse.es.tapeacompostela.model.entity.Redemption;
@@ -17,11 +18,14 @@ import gal.usc.etse.es.tapeacompostela.repository.RewardRepository;
 import gal.usc.etse.es.tapeacompostela.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ProblemDetail;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PostAuthorize;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.ErrorResponseException;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -38,6 +42,7 @@ public class RewardService {
     private final BusinessRepository businesses;
     private final UserRepository users;
     private final PatchUtils patchUtils;
+    private final QrService qrService;
 
     // Las recompensas activas de un negocio
     public List<RewardDTO> getRewards(Long businessId) {
@@ -116,15 +121,35 @@ public class RewardService {
         return redemptions.findAllByUserUsername(username, Sort.by(Sort.Direction.DESC, "redeemedAt")).stream().map(this::toDTO).toList();
     }
 
+    // El QR de un canje pendiente, solo para el usuario que lo canjeó. Cambia cada 30 segundos: cuando llega
+    // expiresAt, la app pide uno nuevo
+    @PreAuthorize("hasRole('USER')")
+    public RedemptionQrDTO getQr(Long id, String username) {
+        Redemption redemption = redemptions.findById(id).orElseThrow(() -> new NotFoundException("Redemption", id));
+        if (!redemption.getUser().getUsername().equals(username)) {
+            throw new AccessDeniedException("Redemption " + id + " is not yours");
+        }
+        if (redemption.getStatus() != Status.PENDING) {
+            throw new ConflictException("Redemption " + redemption.getCode() + " is " + redemption.getStatus());
+        }
+        return new RedemptionQrDTO(qrService.create(id), qrService.nextChange());
+    }
+
     // El propietario del negocio marca el código como usado cuando el cliente lo enseña: [{"op": "replace", "path": "/status", "value": "USED"}].
-    // Solo puede cambiar el estado, solo desde PENDING y solo a USED
+    // Solo puede cambiar el estado, solo desde PENDING y solo a USED. qr es el QR que el negocio acaba de escanear
+    // del teléfono del cliente: sin uno válido y reciente, el canje no se marca como usado
     @Transactional
     @PreAuthorize("hasRole('OWNER')")
-    public RedemptionDTO updateRedemption(Long id, List<Map<String, Object>> updates, String username) throws JsonPatchException {
+    public RedemptionDTO updateRedemption(Long id, List<Map<String, Object>> updates, String username, String qr) throws JsonPatchException {
         Redemption redemption = redemptions.findById(id).orElseThrow(() -> new NotFoundException("Redemption", id));
         checkOwner(redemption.getReward().getBusiness(), username);
         if (redemption.getStatus() != Status.PENDING) {
             throw new ConflictException("Redemption " + redemption.getCode() + " is " + redemption.getStatus());
+        }
+        if (!qrService.isValid(qr, id)) {
+            // ErrorResponseException, como NotEnoughPointsException, pero sin una clase propia: un 400 con este texto
+            throw new ErrorResponseException(HttpStatus.BAD_REQUEST,
+                    ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, "The QR is not valid or has expired"), null);
         }
 
         RedemptionDTO patched = patchUtils.applyPatch(toDTO(redemption), updates, Set.of("status"));

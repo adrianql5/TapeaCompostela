@@ -2,6 +2,7 @@ package gal.usc.etse.es.tapeacompostela.controller;
 
 import com.github.fge.jsonpatch.JsonPatchException;
 import gal.usc.etse.es.tapeacompostela.model.dto.RedemptionDTO;
+import gal.usc.etse.es.tapeacompostela.model.dto.RedemptionQrDTO;
 import gal.usc.etse.es.tapeacompostela.model.dto.RewardDTO;
 import gal.usc.etse.es.tapeacompostela.service.RewardService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -79,10 +80,19 @@ public class RewardController {
         return rewardService.getRedemption(id);
     }
 
-    @Operation(summary = "Mark a redemption as USED with JSON Patch (the owner of the business)")
+    // El QR del canje: un subrecurso suyo, como /businesses/{id}/summary del negocio. Solo lo ve quien lo canjeó
+    @Operation(summary = "The QR of a pending redemption; it changes every 30 seconds")
+    @GetMapping("/redemptions/{id}/qr")
+    public RedemptionQrDTO getQr(@PathVariable Long id, Authentication authentication) {
+        return rewardService.getQr(id, authentication.getName());
+    }
+
+    // La cabecera Redemption-QR: el QR que el negocio acaba de escanear del teléfono del cliente
+    @Operation(summary = "Mark a redemption as USED with JSON Patch (the owner of the business, with the scanned QR)")
     @PatchMapping(path = "/redemptions/{id}", consumes = "application/json-patch+json")
     public RedemptionDTO updateRedemption(@PathVariable Long id, @RequestBody List<Map<String, Object>> updates,
+                                          @RequestHeader("Redemption-QR") String qr,
                                           Authentication authentication) throws JsonPatchException {
-        return rewardService.updateRedemption(id, updates, authentication.getName());
+        return rewardService.updateRedemption(id, updates, authentication.getName(), qr);
     }
 } 
