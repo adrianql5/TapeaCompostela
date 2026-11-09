@@ -1,0 +1,17 @@
+# Keycloak, el proveedor de identidad (IdP) de la parte opcional de OIDC. Separado de compose.yaml para que solo
+# arranque cuando se pide: docker compose -f compose-keycloak.yaml up -d
+# Tiene su propio nombre de proyecto, así que arrancarlo o pararlo nunca toca la base de datos de compose.yaml
+
+name: tapeacompostela-keycloak
+services:
+  keycloak:
+    image: 'quay.io/keycloak/keycloak:26.0.5'
+    container_name: 'tapeacompostela-keycloak'
+    command: ['start-dev', '--import-realm']
+    environment:
+      - 'KC_BOOTSTRAP_ADMIN_USERNAME=admin'
+      - 'KC_BOOTSTRAP_ADMIN_PASSWORD=admin'
+    ports:
+      - '8180:8080'
+    volumes:
+      - './keycloak/realm-tapeacompostela.json:/opt/keycloak/data/import/realm-tapeacompostela.json'
