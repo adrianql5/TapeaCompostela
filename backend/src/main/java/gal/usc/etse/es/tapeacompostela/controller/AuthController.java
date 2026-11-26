@@ -1,6 +1,7 @@
 package gal.usc.etse.es.tapeacompostela.controller;
 
 import gal.usc.etse.es.tapeacompostela.model.dto.*;
+import gal.usc.etse.es.tapeacompostela.ratelimit.RateLimited;
 import gal.usc.etse.es.tapeacompostela.service.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -24,8 +25,10 @@ public class AuthController {
         return authService.register(data);
     }
 
+    // Como mucho 5 intentos por minuto desde la misma IP: probar contraseñas un detrás de otra se vuelve muy lento
     @Operation(summary = "Log in: gives the access token (JWT) and the refresh token")
     @PostMapping("/login")
+    @RateLimited(capacity = 5)
     public TokenResponseDTO login(@RequestBody LoginRequestDTO credentials) {
         return authService.login(credentials);
     }

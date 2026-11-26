@@ -1,6 +1,7 @@
 package gal.usc.etse.es.tapeacompostela.service;
 
 import com.github.fge.jsonpatch.JsonPatchException;
+import gal.usc.etse.es.tapeacompostela.event.RedemptionUsedEvent;
 import gal.usc.etse.es.tapeacompostela.exception.ConflictException;
 import gal.usc.etse.es.tapeacompostela.exception.NotEnoughPointsException;
 import gal.usc.etse.es.tapeacompostela.exception.NotFoundException;
@@ -17,6 +18,7 @@ import gal.usc.etse.es.tapeacompostela.repository.RedemptionRepository;
 import gal.usc.etse.es.tapeacompostela.repository.RewardRepository;
 import gal.usc.etse.es.tapeacompostela.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
@@ -43,6 +45,7 @@ public class RewardService {
     private final UserRepository users;
     private final PatchUtils patchUtils;
     private final QrService qrService;
+    private final ApplicationEventPublisher eventPublisher;
 
     // Las recompensas activas de un negocio
     public List<RewardDTO> getRewards(Long businessId) {
@@ -158,6 +161,8 @@ public class RewardService {
         }
         redemption.setStatus(Status.USED);
         redemption.setUsedAt(LocalDateTime.now());
+        // Para avisar en tiempo real al cliente que enseña el QR (RedemptionEventsController)
+        eventPublisher.publishEvent(new RedemptionUsedEvent(id, redemption.getUser().getUsername()));
         return toDTO(redemption);
     }
 

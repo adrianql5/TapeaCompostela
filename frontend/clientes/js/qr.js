@@ -3,13 +3,14 @@ import { el, esc, icon } from './ui.js';
 
 // El QR de un canje, a pantalla completa para que el local lo escanee. El backend firma un QR nuevo cada 30
 // segundos (GET /redemptions/{id}/qr): aquí se pide otro cuando llega expiresAt, y una barra enseña el tiempo
-// que le queda. Mientras está abierto se pregunta cada pocos segundos si el local ya lo validó, para enseñar
-// el check en cuanto pasa
+// que le queda. Mientras está abierto escucha los avisos del servidor (GET /redemptions/events, Server-Sent
+// Events): cuando el local valida el canje llega "redemption-used" y se enseña el check en ese momento
 export function openQr({ redemption, businessName, onClose, onUsed }) {
   let qr = null;
   let status = redemption.status;
   let error = null;
-  let qrTimer, tick, poll;
+  let qrTimer, tick;
+  const listening = new AbortController(); // para cerrar la conexión de los avisos al salir
 
   const screen = el(`
     <div class="screen" role="dialog" aria-label="Código del canje">
@@ -31,7 +32,7 @@ export function openQr({ redemption, businessName, onClose, onUsed }) {
   function stop() {
     clearTimeout(qrTimer);
     clearInterval(tick);
-    clearInterval(poll);
+    listening.abort();
   }
 
   // Un QR nuevo cada vez que caduca el anterior
@@ -51,6 +52,37 @@ export function openQr({ redemption, businessName, onClose, onUsed }) {
       }
     }
   }
+
+  // Los avisos del servidor. Se leen con fetch y no con EventSource porque EventSource no deja mandar la cabecera
+  // Authorization. La respuesta no termina: va llegando a trozos, y cada evento acaba en una línea vacía, con sus
+  // datos en las líneas "data:". Si la conexión se corta mientras la pantalla sigue abierta, se abre otra
+  async function listen() {
+    try {
+      const response = await fetch('/redemptions/events', {
+        headers: { Authorization: `Bearer ${getSession().accessToken}` },
+        signal: listening.signal,
+      });
+      // 401: el token caducó. checkStatus usa request(), que lo renueva; la siguiente conexión ya lleva el nuevo
+      if (!response.ok) await checkStatus();
+      const reader = response.body.pipeThrough(new TextDecoderStream()).getReader();
+      let buffer = '';
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buffer += value;
+        const events = buffer.split('\n\n');
+        buffer = events.pop();   // el último trozo puede ser un evento a medias: espera al resto
+        for (const event of events) {
+          const data = event.split('\n').filter(line => line.startsWith('data:')).map(line => line.slice(5)).join('');
+          if (data && JSON.parse(data).redemptionId === redemption.id) checkStatus();
+        }
+      }
+    }catch {
+      // abort() al cerrar la pantalla, o sin red
+    }
+    if (!listening.signal.aborted) setTimeout(listen, 3000);
+  }
+      
 
   async function checkStatus() {
     const fresh = await request(`/redemptions/${redemption.id}`).catch(() => null);
@@ -112,8 +144,8 @@ export function openQr({ redemption, businessName, onClose, onUsed }) {
   render();
   if (status === 'PENDING') {
     fetchQr();
-    // El reloj de la barra, y la pregunta "¿ya está usado?" cada 3 segundos
+    // El reloj de la barra, y los avisos del servidor
     tick = setInterval(updateCountdown, 1000);
-    poll = setInterval(checkStatus, 3000);
+    listen();
   }
 }

@@ -71,6 +71,7 @@ const TRANSLATIONS = [
   [/^The email .* is already in use/, 'Ya hay una cuenta con ese email. Inicia sesión'],
   [/^The reward costs (\d+) points and you have (\d+)/, 'No tienes puntos suficientes'],
   [/^The refresh token has expired/, 'Tu sesión ha caducado. Vuelve a iniciar sesión'],
+  [/^Too many requests/, 'Demasiados intentos seguidos. Espera un minuto y vuelve a probar'],
 ];
 
 const FIELDS = { username: 'Usuario', password: 'Contraseña', email: 'Email', name: 'Nombre', rating: 'Puntuación', comment: 'Comentario' };

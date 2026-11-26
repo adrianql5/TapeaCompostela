@@ -3,6 +3,8 @@ package gal.usc.etse.es.tapeacompostela.event;
 import gal.usc.etse.es.tapeacompostela.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.TransientDataAccessException;
+import org.springframework.resilience.annotation.Retryable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
@@ -21,8 +23,12 @@ public class PointsEventListener {
 
     // AFTER_COMMIT: solo si la reseña se guardó (si su transacción se deshace, no hay puntos).
     // @Async: en otro hilo, así que la respuesta del POST /reviews no espera a esto.
-    // REQUIRES_NEW: la transacción de la reseña ya terminó, así que hace falta una nueva para guardar los puntos
+    // REQUIRES_NEW: la transacción de la reseña ya terminó, así que hace falta una nueva para guardar los puntos.
+    // @Retryable: si la base de datos falla un momento (un error transitorio: se cae la conexión, un bloqueo),
+    // lo vuelve a intentar hasta 3 veces, esperando 0,5 s, 1 s y 2 s. Sin esto los puntos se perderían sin que nadie
+    // se entere: este método va en otro hilo y su error no le llega a nadie. Los demás errores no se repiten
     @Async
+    @Retryable(includes = TransientDataAccessException.class, maxRetries = 3, delay = 500, multiplier = 2)
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void onReviewCreated(ReviewCreatedEvent event) {

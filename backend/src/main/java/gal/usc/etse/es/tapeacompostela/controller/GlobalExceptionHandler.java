@@ -3,6 +3,7 @@ package gal.usc.etse.es.tapeacompostela.controller;
 import com.github.fge.jsonpatch.JsonPatchException;
 import gal.usc.etse.es.tapeacompostela.exception.ConflictException;
 import gal.usc.etse.es.tapeacompostela.exception.NotFoundException;
+import gal.usc.etse.es.tapeacompostela.exception.RateLimitExceededException;
 import org.springframework.data.core.PropertyReferenceException;
 import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpHeaders;
@@ -47,6 +48,17 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         problem.setTitle("Authentication failed");
         return problem;
     }
+
+    // Demasiadas peticiones a un endpoint con @RateLimited: 429 y en Retry-After, cuántos segundos esperar
+    @ExceptionHandler(RateLimitExceededException.class)
+    public ResponseEntity<ProblemDetail> handleRateLimit(RateLimitExceededException ex){
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.TOO_MANY_REQUESTS, ex.getMessage());
+        problem.setTitle("Too many requests");
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                .header(HttpHeaders.RETRY_AFTER,String.valueOf(ex.getRetryAfterSeconds()))
+                .body(problem);
+    }
+
 
     // Un JSON Patch que no se puede aplicar: un path que no existe, un campo que no se puede modificar
     @ExceptionHandler(JsonPatchException.class)
