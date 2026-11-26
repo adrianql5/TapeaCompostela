@@ -1,24 +1,51 @@
--- Bares de Santiago
+-- Bares de Santiago: 20 locales del casco histórico, el Ensanche y San Pedro, todos con teléfono y dueño.
+-- Hugo es el dueño de 6 (O Gato Negro, A Taberna do Ensanche, Casa Pepe da Troia, O Filandón, Cervexaría Ensanche
+-- y Raxo e Zorza); Carmen y Manolo, del resto
 INSERT INTO businesses (name, description, address, latitude, longitude, price_range, phone, owner_id, created_at) VALUES
 ('O Gato Negro', 'Taberna clásica de la Rúa da Raíña, sencilla y con mucha clientela local.',
- 'Rúa da Raíña, s/n', 42.8792, -8.5445, 'CHEAP', NULL, (SELECT id FROM users WHERE username = 'hugoocoto'), NOW() - INTERVAL '85 days'),
+ 'Rúa da Raíña, s/n', 42.8792, -8.5445, 'CHEAP', '981 58 91 23', (SELECT id FROM users WHERE username = 'hugoocoto'), NOW() - INTERVAL '85 days'),
 ('A Taberna do Ensanche', 'Tapas de buen producto para acompañar vino o cerveza, con caldos y guisos.',
  'Rúa de Santiago de Chile, 12', 42.8725, -8.5509, 'MODERATE', '981590788', (SELECT id FROM users WHERE username = 'hugoocoto'), NOW() - INTERVAL '80 days'),
 ('Abastos 2.0', 'Cocina de mercado dentro del Mercado de Abastos: el menú cambia según el producto del día.',
- 'Rúa das Ameas, 13-18', 42.8799, -8.5415, 'EXPENSIVE', '981576145', NULL, NOW() - INTERVAL '75 days'),
+ 'Rúa das Ameas, 13-18', 42.8799, -8.5415, 'EXPENSIVE', '981576145', (SELECT id FROM users WHERE username = 'manolo_abastos'), NOW() - INTERVAL '75 days'),
 ('Bar Orella', 'Taberna de aire muy local cuya tapa protagonista es la oreja de cerdo.',
- 'Rúa da Raíña, 21', 42.8789, -8.5444, 'CHEAP', NULL, NULL, NOW() - INTERVAL '75 days'),
+ 'Rúa da Raíña, 21', 42.8789, -8.5444, 'CHEAP', '981 57 26 30', (SELECT id FROM users WHERE username = 'carmen_raina'), NOW() - INTERVAL '75 days'),
 ('Viñoteca Ventosela', 'Vinoteca clásica de la Raíña. Con el vino ponen un plato de embutido y queso.',
- 'Rúa da Raíña, 28', 42.8786, -8.5444, 'CHEAP', NULL, NULL, NOW() - INTERVAL '74 days'),
+ 'Rúa da Raíña, 28', 42.8786, -8.5444, 'CHEAP', '981 58 80 14', (SELECT id FROM users WHERE username = 'carmen_raina'), NOW() - INTERVAL '74 days'),
 ('A Taberna do Bispo', 'Local familiar con gran variedad de tapas y vinos, a unos 100 metros de la Catedral.',
- 'Rúa do Franco, 37', 42.8786, -8.5450, 'MODERATE', NULL, NULL, NOW() - INTERVAL '70 days'),
+ 'Rúa do Franco, 37', 42.8786, -8.5450, 'MODERATE', '981 58 18 45', (SELECT id FROM users WHERE username = 'carmen_raina'), NOW() - INTERVAL '70 days'),
 ('Petiscos do Cardeal', 'Amplia barra con selección de pinchos y carta en la que destaca el marisco.',
- 'Rúa do Franco, 10', 42.8796, -8.5451, 'MODERATE', NULL, NULL, NOW() - INTERVAL '68 days'),
+ 'Rúa do Franco, 10', 42.8796, -8.5451, 'MODERATE', '981 56 33 21', (SELECT id FROM users WHERE username = 'carmen_raina'), NOW() - INTERVAL '68 days'),
 ('Bar La Tita', 'Famoso por el pincho de tortilla que acompaña a cada consumición.',
- 'Rúa Nova, 46', 42.8781, -8.5437, 'CHEAP', NULL, NULL, NOW() - INTERVAL '60 days');
+ 'Rúa Nova, 46', 42.8781, -8.5437, 'CHEAP', '981 58 49 52', (SELECT id FROM users WHERE username = 'carmen_raina'), NOW() - INTERVAL '60 days'),
+('Casa Pepe da Troia', 'Bar pequeño de la Rúa da Troia con empanada casera y vino de Ribeiro en cunca.',
+ 'Rúa da Troia, 8', 42.8818, -8.5428, 'CHEAP', '981 58 22 04', (SELECT id FROM users WHERE username = 'hugoocoto'), NOW() - INTERVAL '58 days'),
+('O Filandón', 'Barra estrecha y siempre llena: con cada vino sale una tapa de queso o de chorizo.',
+ 'Rúa da Acibechería, 6', 42.8814, -8.5440, 'CHEAP', '981 57 25 46', (SELECT id FROM users WHERE username = 'hugoocoto'), NOW() - INTERVAL '55 days'),
+('Mesón do Vilar', 'Comedor de piedra en la Rúa do Vilar: pulpo, pimientos de Padrón y raxo.',
+ 'Rúa do Vilar, 47', 42.8774, -8.5440, 'MODERATE', '981 56 06 17', (SELECT id FROM users WHERE username = 'carmen_raina'), NOW() - INTERVAL '52 days'),
+('A Moa', 'Cocina gallega actualizada con terraza en un jardín escondido detrás de la Quintana.',
+ 'Rúa de San Paio de Antealtares, 14', 42.8806, -8.5420, 'EXPENSIVE', '981 57 34 60', (SELECT id FROM users WHERE username = 'manolo_abastos'), NOW() - INTERVAL '50 days'),
+('Taberna do Curro', 'Tapas de mercado al lado de la Praza de Abastos. Los sábados, mejillones al vapor.',
+ 'Rúa do Curro da Parra, 7', 42.8804, -8.5412, 'MODERATE', '981 55 60 59', (SELECT id FROM users WHERE username = 'manolo_abastos'), NOW() - INTERVAL '47 days'),
+('Bodeguilla de San Roque', 'Vinos por copas y raciones para compartir en una bodega de techos bajos.',
+ 'Rúa de San Roque, 13', 42.8838, -8.5440, 'MODERATE', '981 56 43 79', (SELECT id FROM users WHERE username = 'carmen_raina'), NOW() - INTERVAL '44 days'),
+('O Dezaseis', 'Bajo de piedra en San Pedro con caldo, lacón y cocido los fines de semana.',
+ 'Rúa de San Pedro, 16', 42.8830, -8.5395, 'MODERATE', '981 56 48 80', (SELECT id FROM users WHERE username = 'manolo_abastos'), NOW() - INTERVAL '40 days'),
+('Café Casino', 'Café de 1873 con lámparas de araña y sillones: chocolate con churros y tostas.',
+ 'Rúa do Vilar, 35', 42.8779, -8.5441, 'MODERATE', '981 57 75 03', (SELECT id FROM users WHERE username = 'carmen_raina'), NOW() - INTERVAL '36 days'),
+('Cervexaría Ensanche', 'Cervezas gallegas de grifo y hamburguesas de ternera en pleno Ensanche.',
+ 'Rúa da República Arxentina, 21', 42.8738, -8.5472, 'CHEAP', '981 59 31 12', (SELECT id FROM users WHERE username = 'hugoocoto'), NOW() - INTERVAL '30 days'),
+('Raxo e Zorza', 'Tapas de raxo, zorza y croquetas caseras; terraza al sol en la Praza Roxa.',
+ 'Praza Roxa, 3', 42.8733, -8.5506, 'CHEAP', '981 59 07 41', (SELECT id FROM users WHERE username = 'hugoocoto'), NOW() - INTERVAL '25 days'),
+('Horta do Obradoiro', 'Cocina vegetariana de temporada con verduras de las huertas de Conxo.',
+ 'Rúa das Hortas, 16', 42.8812, -8.5474, 'EXPENSIVE', '981 56 53 16', (SELECT id FROM users WHERE username = 'manolo_abastos'), NOW() - INTERVAL '20 days'),
+('Pulpería A Quintana', 'Pulpo á feira cortado con tijera y servido en plato de madera.',
+ 'Praza da Quintana, 2', 42.8805, -8.5430, 'MODERATE', '981 58 11 90', (SELECT id FROM users WHERE username = 'carmen_raina'), NOW() - INTERVAL '6 days');
 
 INSERT INTO tags (name) VALUES
-('Tapa gratis'), ('Pulpo'), ('Marisco'), ('Vinos'), ('Tortilla'), ('Tradicional'), ('Casco histórico'), ('Ensanche');
+('Tapa gratis'), ('Pulpo'), ('Marisco'), ('Vinos'), ('Tortilla'), ('Tradicional'), ('Casco histórico'), ('Ensanche'),
+('Empanada'), ('Terraza'), ('Cervezas'), ('Vegetariano'), ('Raciones');
 
 INSERT INTO business_tags (business_id, tag_id)
 SELECT b.id, t.id
@@ -41,7 +68,37 @@ FROM (VALUES
     ('Petiscos do Cardeal',   'Marisco'),
     ('Petiscos do Cardeal',   'Casco histórico'),
     ('Bar La Tita',           'Tortilla'),
-    ('Bar La Tita',           'Tapa gratis')
+    ('Bar La Tita',           'Tapa gratis'),
+    ('Casa Pepe da Troia',      'Empanada'),
+    ('Casa Pepe da Troia',      'Vinos'),
+    ('Casa Pepe da Troia',      'Casco histórico'),
+    ('O Filandón',              'Tapa gratis'),
+    ('O Filandón',              'Vinos'),
+    ('O Filandón',              'Casco histórico'),
+    ('Mesón do Vilar',          'Pulpo'),
+    ('Mesón do Vilar',          'Tradicional'),
+    ('Mesón do Vilar',          'Casco histórico'),
+    ('A Moa',                   'Terraza'),
+    ('A Moa',                   'Casco histórico'),
+    ('Taberna do Curro',        'Marisco'),
+    ('Taberna do Curro',        'Raciones'),
+    ('Taberna do Curro',        'Casco histórico'),
+    ('Bodeguilla de San Roque', 'Vinos'),
+    ('Bodeguilla de San Roque', 'Raciones'),
+    ('O Dezaseis',              'Tradicional'),
+    ('O Dezaseis',              'Raciones'),
+    ('Café Casino',             'Casco histórico'),
+    ('Cervexaría Ensanche',     'Cervezas'),
+    ('Cervexaría Ensanche',     'Ensanche'),
+    ('Raxo e Zorza',            'Terraza'),
+    ('Raxo e Zorza',            'Ensanche'),
+    ('Raxo e Zorza',            'Tapa gratis'),
+    ('Horta do Obradoiro',      'Vegetariano'),
+    ('Horta do Obradoiro',      'Terraza'),
+    ('Pulpería A Quintana',     'Pulpo'),
+    ('Pulpería A Quintana',     'Casco histórico'),
+    ('O Gato Negro',            'Vinos'),
+    ('A Taberna do Ensanche',   'Raciones')
 ) AS v (business, tag)
 JOIN businesses b ON b.name = v.business
 JOIN tags t ON t.name = v.tag;

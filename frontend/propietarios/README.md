@@ -10,8 +10,7 @@ cd backend
 ./gradlew bootRun
 ```
 
-y en el navegador `http://localhost:8080/propietarios/index.html`. Con los datos de la demo:
-`./gradlew bootRun --args='--spring.profiles.active=demo'`.
+y en el navegador `http://localhost:8080/propietarios/index.html`.
 
 La cámara del escáner solo funciona en `localhost` o con HTTPS (la guía de la demo explica cómo abrirla en un
 móvil). Sin cámara se puede pegar el texto del QR a mano.

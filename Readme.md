@@ -12,8 +12,7 @@
 
 ```bash
 cd backend
-./gradlew bootRun                                          # datos de prueba de siempre
-./gradlew bootRun --args='--spring.profiles.active=demo'   # con los datos de la demo
+./gradlew bootRun          # arranca también PostgreSQL (Docker) y carga los datos de prueba
 ```
 
 Spring Boot sirve también las dos webs:

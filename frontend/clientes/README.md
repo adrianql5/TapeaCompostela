@@ -10,8 +10,7 @@ cd backend
 ./gradlew bootRun
 ```
 
-y en el navegador `http://localhost:8080/clientes/index.html`. Con los datos de la demo (más locales, usuarios y
-recompensas): `./gradlew bootRun --args='--spring.profiles.active=demo'`.
+y en el navegador `http://localhost:8080/clientes/index.html`.
 
 Para verla como en un móvil desde el ordenador: herramientas de desarrollador del navegador (F12) y el botón del
 móvil. Para abrirla en un móvil de verdad hace falta HTTPS (la guía de la demo lo explica).
