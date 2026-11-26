@@ -1,7 +1,7 @@
 import { el, esc, icon } from './ui.js';
 
-// Tu cuenta: los puntos que tienes, cómo ganar más y cerrar sesión
-export function openProfile({ user, onClose, onLogout, onRedemptions }) {
+// Tu cuenta: los puntos que tienes, tu QR para ganar más, cómo funciona y cerrar sesión
+export function openProfile({ user, onClose, onLogout, onRedemptions, onMyQr }) {
   const screen = el(`
     <div class="screen" role="dialog" aria-label="Tu cuenta">
       <div class="screen-head">
@@ -17,11 +17,14 @@ export function openProfile({ user, onClose, onLogout, onRedemptions }) {
         </div>
       </div>
 
+      <button class="btn btn-primary btn-block" style="margin-bottom: 24px" data-action="my-qr">Enseñar mi QR para sumar puntos</button>
+
       <h3 style="margin-bottom: 12px">Cómo funciona</h3>
       <ol class="how">
+        <li>Enseña tu QR al pagar en un local: ganas sus puntos por visita (15 o más), todas las veces que vayas.</li>
         <li>Escribe una reseña de un local: ganas 10 puntos.</li>
         <li>Gástalos en las recompensas de los locales.</li>
-        <li>Enseña el código QR en la barra.</li>
+        <li>Enseña el código QR del canje en la barra.</li>
       </ol>
 
       <button class="btn btn-ghost btn-block" data-action="redemptions">Ver tus canjes</button>
@@ -39,6 +42,7 @@ export function openProfile({ user, onClose, onLogout, onRedemptions }) {
   }
   screen.querySelector('[data-action="back"]').addEventListener('click', close);
   screen.querySelector('[data-action="redemptions"]').addEventListener('click', onRedemptions);
+  screen.querySelector('[data-action="my-qr"]').addEventListener('click', onMyQr);
   screen.querySelector('[data-action="logout"]').addEventListener('click', onLogout);
 
   return { close };

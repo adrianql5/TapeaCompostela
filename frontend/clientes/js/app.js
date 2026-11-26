@@ -2,6 +2,7 @@ import { getSession, logout, request } from './api.js';
 import { openAuth } from './auth.js';
 import { openBusiness } from './business.js';
 import { createMap } from './map.js';
+import { openMyQr } from './my-qr.js';
 import { openProfile } from './profile.js';
 import { openQr } from './qr.js';
 import { openRedemptions } from './redemptions.js';
@@ -160,7 +161,13 @@ function showProfile() {
     onClose: () => { panel = null; },
     onLogout: handleLogout,
     onRedemptions: showRedemptions,
+    onMyQr: showMyQr,
   }));
+}
+
+// Al cerrar tu QR se vuelven a pedir tus puntos, para que la píldora de arriba enseñe los que acabas de ganar
+function showMyQr() {
+  openMyQr({ user: state.user, onClose: loadUser });
 }
 
 function showQr(redemption) {

@@ -56,15 +56,47 @@ public class QrService {
                 parts[2].getBytes(StandardCharsets.UTF_8));
     }
 
+    // El QR personal de un cliente: "U<id del usuario>.<window>.<signature>", por ejemplo "U1.59200123.Xb7w...".
+    // La U lo distingue del QR de un canje (que empieza por un número) y entra en la firma: la firma de un canje
+    // nunca vale como la de un usuario, aunque los dos ids coincidan
+    public String createForUser(Long userId) {
+        long window = currentWindow();
+        String subject = "U" + userId;
+        return subject + "." + window + "." + sign(subject, window);
+    }
+
+    // El id del usuario de un QR personal válido, o null si no lo es: otro formato, una ventana pasada o una firma
+    // incorrecta. Las mismas comprobaciones que isValid
+    public Long userIdOf(String qr) {
+        String[] parts = qr.split("\\.");
+        if (parts.length != 3 || !parts[0].matches("U\\d+")) {
+            return null;
+        }
+        long window;
+        try {
+            window = Long.parseLong(parts[1]);
+        } catch (NumberFormatException e) {
+            return null;
+        }
+        long now = currentWindow();
+        if (window != now && window != now - 1) {
+            return null;
+        }
+        boolean signed = MessageDigest.isEqual(sign(parts[0], window).getBytes(StandardCharsets.UTF_8),
+                parts[2].getBytes(StandardCharsets.UTF_8));
+        return signed ? Long.parseLong(parts[0].substring(1)) : null;
+    }
+
     private long currentWindow() {
         return Instant.now().getEpochSecond() / PERIOD_SECONDS;
     }
 
-    private String sign(Long redemptionId, long window) {
+    // subject: el id del canje, o "U" + el id del usuario en un QR personal
+    private String sign(Object subject, long window) {
         try {
             Mac mac = Mac.getInstance("HmacSHA256");
             mac.init(key);
-            byte[] signature = mac.doFinal((redemptionId + ":" + window).getBytes(StandardCharsets.UTF_8));
+            byte[] signature = mac.doFinal((subject + ":" + window).getBytes(StandardCharsets.UTF_8));
             return Base64.getUrlEncoder().withoutPadding().encodeToString(signature);
         } catch (GeneralSecurityException e) {
             throw new IllegalStateException(e);

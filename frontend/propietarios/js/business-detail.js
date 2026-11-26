@@ -2,6 +2,7 @@ import { request } from './api.js';
 import { basicsFields, locationFields, problemsOf, styleFields } from './business-fields.js';
 import { PRICE_LABEL, priceSymbols, rating, shortDate } from './format.js';
 import { miniMap } from './location-picker.js';
+import { openScanner } from './scanner.js';
 import { el, esc, icon, openSheet, stars, toast } from './ui.js';
 
 // Un local del propietario: cómo va (nota, reseñas, recompensas), sus recompensas, lo que dicen los clientes y
@@ -66,6 +67,15 @@ export function openBusinessDetail({ id, onChanged, onDeleted }) {
 
       <section class="section">
         <div class="section-head">
+          <h3>Puntos por visita</h3>
+          <button class="btn btn-ghost btn-small" data-action="visit-points">${icon('pen', 18)} Cambiar</button>
+        </div>
+        <p class="muted" style="margin-bottom: 12px">Cuando un cliente pague, escanea su QR: gana <strong>${business.visitPoints}</strong> puntos cada vez que venga.</p>
+        <button class="btn btn-primary btn-block" data-action="give-points">Dar ${business.visitPoints} puntos a un cliente</button>
+      </section>
+
+      <section class="section">
+        <div class="section-head">
           <h3>Recompensas</h3>
           <button class="btn btn-ghost btn-small" data-action="add-reward">Añadir</button>
         </div>
@@ -112,7 +122,9 @@ export function openBusinessDetail({ id, onChanged, onDeleted }) {
       </div>`;
 
     content.querySelector('[data-slot="map"]').replaceWith(miniMap(business.latitude, business.longitude));
-    content.querySelector('[data-action="add-reward"]').addEventListener('click', () => openRewardForm(screen, id, load));
+    content.querySelector('[data-action="give-points"]').addEventListener('click', () => openScanner({ business }));
+    content.querySelector('[data-action="visit-points"]').addEventListener('click', () => openVisitPointsForm(screen, business, load));
+    content.querySelector('[data-action="add-reward"]').addEventListener('click', () => openRewardForm(screen, id, business.visitPoints, load));
     content.querySelector('[data-action="more"]')?.addEventListener('click', loadMoreReviews);
     content.querySelector('[data-action="edit"]').addEventListener('click', () => openEditBusiness(business, () => { load(); onChanged(); }));
     content.querySelector('[data-action="delete"]').addEventListener('click', () => openDeleteBusiness(screen, business, () => { close(); onDeleted(); }));
@@ -192,11 +204,56 @@ function openEditBusiness(business, onSaved) {
   });
 }
 
+// Cambiar los puntos por visita: un PATCH con una sola operación. Tienen que ser más que los 10 de una reseña
+// (el backend lo comprueba con @Min(11); aquí se avisa antes de mandarlo)
+function openVisitPointsForm(screen, business, onSaved) {
+  const sheet = openSheet({ label: 'Puntos por visita', scrim: true, parent: screen });
+  sheet.body.innerHTML = `
+    <form>
+      <h2 style="margin-bottom: 18px">Puntos por visita</h2>
+      <div class="field">
+        <label for="visit">Puntos que gana un cliente cada vez que viene</label>
+        <input id="visit" type="number" inputmode="numeric" min="11" value="${business.visitPoints}" />
+        <span class="hint">Más que una reseña, que da 10.</span>
+      </div>
+      <div class="alert error" hidden></div>
+      <button class="btn btn-primary btn-block" data-action="submit">Guardar</button>
+    </form>`;
+  const input = sheet.body.querySelector('#visit');
+  const submit = sheet.body.querySelector('[data-action="submit"]');
+  const alert = sheet.body.querySelector('.alert');
+  const refresh = () => { submit.disabled = !(Number(input.value) >= 11) || Number(input.value) === business.visitPoints; };
+  input.addEventListener('input', refresh);
+  refresh();
+
+  sheet.body.querySelector('form').addEventListener('submit', async event => {
+    event.preventDefault();
+    submit.disabled = true;
+    submit.textContent = 'Guardando…';
+    alert.hidden = true;
+    try {
+      await request(`/businesses/${business.id}`, {
+        method: 'PATCH',
+        contentType: 'application/json-patch+json',
+        body: [{ op: 'replace', path: '/visitPoints', value: Number(input.value) }],
+      });
+      toast('Puntos por visita guardados', 'ok');
+      sheet.close();
+      onSaved();
+    } catch (e) {
+      alert.textContent = e.message;
+      alert.hidden = false;
+      submit.textContent = 'Guardar';
+      refresh();
+    }
+  });
+}
+
 const PRESETS = [30, 60, 120];
 
 // Nueva recompensa (POST /rewards). Los puntos se eligen de unos valores típicos o se escriben a mano;
-// una reseña da 10 puntos, así que se explica cuántas reseñas cuesta conseguirla
-function openRewardForm(screen, businessId, onCreated) {
+// se explica cuántas visitas a este local cuesta conseguirla
+function openRewardForm(screen, businessId, visitPoints, onCreated) {
   const sheet = openSheet({ label: 'Nueva recompensa', scrim: true, parent: screen });
   sheet.body.innerHTML = `
     <form>
@@ -226,8 +283,8 @@ function openRewardForm(screen, businessId, onCreated) {
   function refresh() {
     const points = Number($('#points').value);
     sheet.body.querySelectorAll('[data-points]').forEach(b => b.setAttribute('aria-pressed', String(Number(b.dataset.points) === points)));
-    const reviewsNeeded = Math.ceil(points / 10);
-    $('.hint').textContent = `Un cliente la consigue con ${Math.max(1, reviewsNeeded)} ${reviewsNeeded === 1 ? 'reseña' : 'reseñas'}.`;
+    const visitsNeeded = Math.max(1, Math.ceil(points / visitPoints));
+    $('.hint').textContent = `Un cliente la consigue con ${visitsNeeded} ${visitsNeeded === 1 ? 'visita' : 'visitas'} a tu local.`;
     submit.disabled = !($('#title').value.trim().length >= 2 && points > 0);
   }
   sheet.body.querySelectorAll('[data-points]').forEach(b => b.addEventListener('click', () => { $('#points').value = b.dataset.points; refresh(); }));

@@ -1,5 +1,6 @@
 package gal.usc.etse.es.tapeacompostela.controller;
 
+import gal.usc.etse.es.tapeacompostela.model.dto.RedemptionQrDTO;
 import gal.usc.etse.es.tapeacompostela.model.dto.UserDTO;
 import gal.usc.etse.es.tapeacompostela.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -22,5 +23,12 @@ public class UserController {
     @GetMapping("/me")
     public UserDTO getMe(Authentication authentication) {
         return userService.getUser(authentication.getName());
+    }
+
+    // Mi QR para sumar puntos: lo enseño al pagar y el dueño del local lo escanea
+    @Operation(summary = "The personal QR of the logged user, that changes every 30 seconds. The owner of a business scans it to give visit points")
+    @GetMapping("/me/qr")
+    public RedemptionQrDTO getMyQr(Authentication authentication) {
+        return userService.getQr(authentication.getName());
     }
 }

@@ -3,9 +3,12 @@ import { el, esc, icon, openSheet } from './ui.js';
 
 // Validar un canje escaneando el QR del móvil del cliente. El QR es "<id>.<ventana>.<firma>": la primera parte
 // dice qué canje es, y el QR entero va en la cabecera Redemption-QR como prueba de que el cliente está delante.
+// Con business, el escáner da puntos en vez de validar canjes: lee el QR personal del cliente ("U<id>.<ventana>.<firma>")
+// y lo manda en la cabecera Visit-QR a POST /businesses/{id}/visits.
 // El resultado sale en grande, verde o rojo, para verlo de un vistazo con la barra llena de gente.
 // La cámara se abre con getUserMedia (solo funciona con HTTPS o en localhost) y jsQR busca el QR en sus imágenes
-export function openScanner() {
+export function openScanner({ business } = {}) {
+  const HINT = business ? 'Apunta al QR personal del cliente' : 'Apunta al código QR del cliente';
   let busy = false;
   let result = null;       // { ok: true, redemption } o { ok: false, message }
   let stream = null;
@@ -15,13 +18,13 @@ export function openScanner() {
   const scanner = el(`
     <div class="scanner" role="dialog" aria-label="Escanear un canje">
       <div class="scanner-top">
-        <strong>Escanear canje</strong>
+        <strong>${business ? `Dar puntos · ${esc(business.name)}` : 'Escanear canje'}</strong>
       </div>
       <div class="scanner-view">
         <canvas class="scanner-preview" aria-hidden="true"></canvas>
         <div class="scanner-frame" aria-hidden="true"></div>
         <div class="scanner-below">
-          <p class="scanner-hint">Apunta al código QR del cliente</p>
+          <p class="scanner-hint">${HINT}</p>
           <button class="btn scanner-close">${icon('close')} Cerrar</button>
         </div>
       </div>
@@ -99,20 +102,30 @@ export function openScanner() {
     hint.textContent = 'Comprobando…';
     navigator.vibrate?.(60);
     try {
-      const id = qr.trim().split('.')[0];
-      if (!/^\d+$/.test(id)) throw new Error('Este QR no es de TapeaCompostela');
-      const redemption = await request(`/redemptions/${id}`, {
-        method: 'PATCH',
-        contentType: 'application/json-patch+json',
-        headers: { 'Redemption-QR': qr.trim() },
-        body: [{ op: 'replace', path: '/status', value: 'USED' }],
-      });
-      result = { ok: true, redemption };
+      const text = qr.trim();
+      // El QR personal empieza por U; el de un canje, por el número del canje
+      const personal = /^U\d+\./.test(text);
+      if (business) {
+        if (!personal) throw new Error('Este es el QR de un canje. Escanéalo con «Escanear canje»');
+        const visit = await request(`/businesses/${business.id}/visits`, { method: 'POST', headers: { 'Visit-QR': text } });
+        result = { ok: true, visit };
+      } else {
+        if (personal) throw new Error('Este es el QR para sumar puntos. Escanéalo desde la ficha del local, con «Dar puntos»');
+        const id = text.split('.')[0];
+        if (!/^\d+$/.test(id)) throw new Error('Este QR no es de TapeaCompostela');
+        const redemption = await request(`/redemptions/${id}`, {
+          method: 'PATCH',
+          contentType: 'application/json-patch+json',
+          headers: { 'Redemption-QR': text },
+          body: [{ op: 'replace', path: '/status', value: 'USED' }],
+        });
+        result = { ok: true, redemption };
+      }
     } catch (e) {
       result = { ok: false, message: e.status === 403 ? 'Este canje es de otro local' : e.message };
     } finally {
       busy = false;
-      hint.textContent = stream ? 'Apunta al código QR del cliente' : 'No se puede usar la cámara';
+      hint.textContent = stream ? HINT : 'No se puede usar la cámara';
     }
     showResult();
   }
@@ -142,15 +155,19 @@ export function openScanner() {
   }
 
   function showResult() {
-    sheet = openSheet({ label: result.ok ? 'Canje válido' : 'Canje no válido', parent: scanner, onClose: close });
+    const label = result.visit ? 'Puntos sumados' : result.ok ? 'Canje válido' : 'No válido';
+    sheet = openSheet({ label, parent: scanner, onClose: close });
     sheet.body.innerHTML = `
       <div class="result">
         <div class="result-mark ${result.ok ? 'ok' : 'bad'}">${result.ok ? icon('check', 52) : icon('close', 52)}</div>
-        ${result.ok ? `
+        ${result.visit ? `
+          <h2>+${result.visit.points} puntos</h2>
+          <p style="font-size: 20px; font-weight: 700; margin-top: 10px">para ${esc(result.visit.user)}</p>
+          <p class="muted" style="margin-top: 4px">en ${esc(result.visit.business)}</p>` : result.ok ? `
           <h2>Canje válido</h2>
           <p style="font-size: 20px; font-weight: 700; margin-top: 10px">${esc(result.redemption.reward)}</p>
           <p class="muted" style="margin-top: 4px">para ${esc(result.redemption.user)}, código ${esc(result.redemption.code)}</p>` : `
-          <h2>No se puede canjear</h2>
+          <h2>${business ? 'No se pueden dar los puntos' : 'No se puede canjear'}</h2>
           <p style="margin-top: 10px">${esc(result.message)}</p>`}
       </div>
       <button class="btn btn-dark btn-block" style="margin-top: 24px" data-action="again">Escanear otro</button>

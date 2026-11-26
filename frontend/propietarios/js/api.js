@@ -75,9 +75,10 @@ const TRANSLATIONS = [
   [/^Redemption .* is USED/, 'Este canje ya se usó'],
   [/^Redemption .* is EXPIRED/, 'Este canje ha caducado: pasaron 30 días'],
   [/^Tag .* not found/, 'Una de las etiquetas ya no existe. Recarga la página'],
+  [/^You cannot give points to yourself/, 'No puedes darte puntos a ti mismo: escanea el QR del cliente'],
 ];
 
-const FIELDS = { username: 'Usuario', password: 'Contraseña', email: 'Email', name: 'Nombre', address: 'Dirección', phone: 'Teléfono', description: 'Descripción', title: 'Título', pointsCost: 'Puntos' };
+const FIELDS = { username: 'Usuario', password: 'Contraseña', email: 'Email', name: 'Nombre', address: 'Dirección', phone: 'Teléfono', description: 'Descripción', title: 'Título', pointsCost: 'Puntos', visitPoints: 'Puntos por visita' };
 
 function translate(text) {
   const found = TRANSLATIONS.find(([pattern]) => pattern.test(text));

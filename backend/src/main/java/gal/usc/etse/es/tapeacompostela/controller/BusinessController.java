@@ -6,6 +6,7 @@ import gal.usc.etse.es.tapeacompostela.model.dto.BusinessDTO;
 import gal.usc.etse.es.tapeacompostela.model.dto.BusinessSummaryDTO;
 import gal.usc.etse.es.tapeacompostela.model.dto.ReviewDTO;
 import gal.usc.etse.es.tapeacompostela.model.dto.RewardDTO;
+import gal.usc.etse.es.tapeacompostela.model.dto.VisitDTO;
 import gal.usc.etse.es.tapeacompostela.model.entity.Business.PriceRange;
 import gal.usc.etse.es.tapeacompostela.service.BusinessService;
 import gal.usc.etse.es.tapeacompostela.service.SummaryService;
@@ -135,5 +136,13 @@ public class BusinessController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteBusiness(@PathVariable Long id) {
         businessService.deleteBusiness(id);
+    }
+
+    // Dar a un cliente los puntos por visita del local. La cabecera Visit-QR: el QR personal que el dueño acaba de
+    // escanear del móvil del cliente (como Redemption-QR al validar un canje)
+    @Operation(summary = "Give the visit points of the business to a customer (its owner, with the scanned personal QR of the customer)")
+    @PostMapping("/{id}/visits")
+    public VisitDTO addVisit(@PathVariable Long id, @RequestHeader("Visit-QR") String qr, Authentication authentication) {
+        return businessService.addVisit(id, qr, authentication.getName());
     }
 }

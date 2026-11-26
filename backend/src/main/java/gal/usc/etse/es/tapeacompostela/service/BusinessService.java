@@ -1,7 +1,9 @@
 package gal.usc.etse.es.tapeacompostela.service;
 
+import gal.usc.etse.es.tapeacompostela.exception.ConflictException;
 import gal.usc.etse.es.tapeacompostela.exception.NotFoundException;
 import gal.usc.etse.es.tapeacompostela.model.dto.BusinessDTO;
+import gal.usc.etse.es.tapeacompostela.model.dto.VisitDTO;
 import gal.usc.etse.es.tapeacompostela.model.entity.Business;
 import gal.usc.etse.es.tapeacompostela.model.entity.Tag;
 import gal.usc.etse.es.tapeacompostela.model.entity.User;
@@ -14,10 +16,14 @@ import org.springframework.data.domain.Example;
 import org.springframework.data.domain.ExampleMatcher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ProblemDetail;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PostAuthorize;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.ErrorResponseException;
 
 import java.util.HashSet;
 import java.util.List;
@@ -35,11 +41,12 @@ public class BusinessService {
     private final TagRepository tags;
     private final PatchUtils patchUtils;
     private final UserRepository users;
+    private final QrService qrService;
 
     // Los campos que un PATCH puede cambiar
-    private static final Set<String> EDITABLE = Set.of("name", "description", "address", "latitude", "longitude", "priceRange", "phone", "tags");
+    private static final Set<String> EDITABLE = Set.of("name", "description", "address", "latitude", "longitude", "priceRange", "phone", "visitPoints", "tags");
     
-    private static final ExampleMatcher SEARCH = ExampleMatcher.matching().withIgnorePaths("averageRating", "ratingCount").withMatcher("name", match -> match.contains().ignoreCase());
+    private static final ExampleMatcher SEARCH = ExampleMatcher.matching().withIgnorePaths("averageRating", "ratingCount", "visitPoints").withMatcher("name", match -> match.contains().ignoreCase());
 
     public Page<BusinessDTO> getBusinesses(String name, Business.PriceRange priceRange, String owner, Pageable page){
         
@@ -48,10 +55,11 @@ public class BusinessService {
         Business probe = new Business();
         probe.setName(name);
         probe.setPriceRange(priceRange);
-        // Los campos con valor por defecto (averageRating = 0, ratingCount = 0) no son null, así que formarían parte
-        // del filtro: withIgnorePaths los deja fuera. Query by Example no usa las listas
+        // Los campos con valor por defecto (averageRating = 0, ratingCount = 0, visitPoints = 15) no son null, así que
+        // formarían parte del filtro: withIgnorePaths los deja fuera. Query by Example no usa las listas
         probe.setAverageRating(null);
         probe.setRatingCount(null);
+        probe.setVisitPoints(null);
         // Una sonda anidada: el owner de la sonda solo tiene el username, así que filtra por owner.username
         if (owner != null) {
             User ownerProbe = new User();
@@ -116,7 +124,32 @@ public class BusinessService {
 
 
 
+    // Una visita: el dueño escanea el QR personal del cliente y el cliente gana los puntos por visita del local.
+    // No hay límite de visitas. Todo en una transacción: si algo falla, no se suma nada
+    @Transactional
+    public VisitDTO addVisit(Long id, String qr, String username) {
+        Business business = businesses.findById(id).orElseThrow(() -> new NotFoundException("Business", id));
+        // Solo el dueño de este local da sus puntos (si no, 403), como al validar un canje
+        if (business.getOwner() == null || !business.getOwner().getUsername().equals(username)) {
+            throw new AccessDeniedException("Business " + id + " is not yours");
+        }
+        Long customerId = qrService.userIdOf(qr);
+        if (customerId == null) {
+            throw new ErrorResponseException(HttpStatus.BAD_REQUEST,
+                    ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, "The QR is not valid or has expired"), null);
+        }
+        User customer = users.findById(customerId).orElseThrow(() -> new NotFoundException("User", customerId));
+        // El dueño también es USER y tiene su QR: no puede darse puntos a sí mismo
+        if (customer.getUsername().equals(username)) {
+            throw new ConflictException("You cannot give points to yourself");
+        }
+        // La entidad se cargó en esta transacción: el cambio se guarda en el commit, sin save
+        customer.setPoints(customer.getPoints() + business.getVisitPoints());
+        return new VisitDTO(customer.getUsername(), business.getId(), business.getName(), business.getVisitPoints());
+    }
+
     // Solo los campos que el cliente puede cambiar. id, averageRating, ratingCount, owner y createdAt no.
+    // visitPoints es opcional: si no viene (un PUT o un POST sin él), se queda como estaba (15 en un local nuevo)
     private void copy(BusinessDTO business, Business entity) {
         entity.setName(business.name());
         entity.setDescription(business.description());
@@ -125,6 +158,9 @@ public class BusinessService {
         entity.setLongitude(business.longitude());
         entity.setPriceRange(business.priceRange());
         entity.setPhone(business.phone());
+        if (business.visitPoints() != null) {
+            entity.setVisitPoints(business.visitPoints());
+        }
         entity.setTags(findTags(business.tags()));
     }
 
@@ -149,6 +185,7 @@ public class BusinessService {
                 business.getLongitude(),
                 business.getPriceRange(),
                 business.getPhone(),
+                business.getVisitPoints(),
                 business.getAverageRating(),
                 business.getRatingCount(),
                 business.getTags().stream().map(Tag::getName).collect(Collectors.toSet()),

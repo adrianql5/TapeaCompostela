@@ -1,6 +1,7 @@
 package gal.usc.etse.es.tapeacompostela.model.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
@@ -52,6 +53,14 @@ public class Business {
 
     @Column(length = 20)
     private String phone;
+
+    // Los puntos que gana un cliente cada vez que el dueño escanea su QR en el local. Siempre más que una reseña (10):
+    // las reseñas se acaban (una por local), las visitas no. Si el dueño no dice otra cosa, 15
+    @Column(name = "visit_points", nullable = false)
+    @ColumnDefault("15")
+    @Min(11)
+    @Builder.Default
+    private Integer visitPoints = 15;
 
     // Calculado por el servidor a partir de las reseñas, el usuario nunca lo manda
     @Column(name = "average_rating", nullable = false, precision = 3, scale = 2)

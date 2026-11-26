@@ -132,6 +132,7 @@ export function openBusiness({ onClose, onNeedLogin, onRedeem, onChanged }) {
           <h3 style="margin-bottom: 4px">Información</h3>
           <div class="info-row">${icon('pin')} ${esc(detail.address)}</div>
           ${detail.phone ? `<a class="info-row" href="tel:${esc(detail.phone)}">${icon('phone')} ${esc(detail.phone)}</a>` : ''}
+          ${detail.visitPoints ? `<div class="info-row">${icon('check')} Ganas ${detail.visitPoints} puntos cada vez que vienes: enseña tu QR al pagar</div>` : ''}
         </section>` : ''}`;
 
     // Los botones de la ficha. data-action dice qué hace cada uno

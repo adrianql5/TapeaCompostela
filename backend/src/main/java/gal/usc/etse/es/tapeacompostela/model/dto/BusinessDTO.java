@@ -3,6 +3,7 @@ package gal.usc.etse.es.tapeacompostela.model.dto;
 import com.fasterxml.jackson.annotation.JsonView;
 import gal.usc.etse.es.tapeacompostela.model.entity.Business.PriceRange;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -27,6 +28,8 @@ public record BusinessDTO(
         @JsonView(Views.Summary.class) @NotNull Double longitude,
         @JsonView(Views.Summary.class) PriceRange priceRange,
         @JsonView(Views.Detail.class) @Size(max = 20) String phone,
+        @Schema(description = "Points a customer gets each time the owner scans their QR (more than the 10 of a review)", example = "15")
+        @JsonView(Views.Detail.class) @Min(11) Integer visitPoints,
         @Schema(description = "Average of its reviews, from 1 to 5", example = "4.50", accessMode = Schema.AccessMode.READ_ONLY)
         @JsonView(Views.Summary.class) BigDecimal averageRating,
         @Schema(description = "Number of reviews", example = "2", accessMode = Schema.AccessMode.READ_ONLY)
