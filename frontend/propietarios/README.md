@@ -6,7 +6,8 @@ escáner que valida los canjes. Hecha con HTML, CSS y JavaScript, sin instalar n
 ## Abrirla
 
 ```bash
-./gradlew bootRun        # en la raíz del proyecto
+cd backend
+./gradlew bootRun
 ```
 
 y en el navegador `http://localhost:8080/propietarios/index.html`. Con los datos de la demo:

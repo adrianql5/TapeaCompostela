@@ -6,7 +6,8 @@ para canjearlas. Hecha con HTML, CSS y JavaScript, sin instalar nada: la sirve e
 ## Abrirla
 
 ```bash
-./gradlew bootRun        # en la raíz del proyecto
+cd backend
+./gradlew bootRun
 ```
 
 y en el navegador `http://localhost:8080/clientes/index.html`. Con los datos de la demo (más locales, usuarios y
