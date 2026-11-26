@@ -435,12 +435,18 @@ button, input, textarea, select { font: inherit; color: inherit; }
 .scanner { position: fixed; inset: 0; z-index: 1200; background: #000; color: #fff; display: flex; flex-direction: column; }
 .scanner-top { position: absolute; z-index: 3; top: 0; left: 0; right: 0; padding: calc(var(--safe-top) + 18px) 16px; display: flex; align-items: center; justify-content: center; gap: 12px; }
 .scanner-top .icon-btn { background: rgba(255, 255, 255, 0.16); color: #fff; box-shadow: none; }
-.scanner-view { flex: 1; position: relative; overflow: hidden; }
-.scanner-view video { object-fit: cover !important; }
-.scanner-frame { position: absolute; z-index: 2; left: 50%; top: 45%; width: min(70vw, 300px); aspect-ratio: 1; transform: translate(-50%, -50%); border-radius: 28px; box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.55); pointer-events: none; }
+/* El vídeo ocupa toda la pantalla con un tamaño fijo (absolute + inset), no el que le dé el flex: en Safari del iPhone
+   un contenedor flexible podía dejarlo sin altura, y la cámara leía el QR pero no se veía */
+.scanner-view { position: absolute; inset: 0; overflow: hidden; }
+/* La vista previa es el canvas, encima del vídeo (ver scanner.js). Los dos con el mismo tamaño y recorte */
+.scanner-view video, .scanner-preview { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0; }
+/* Oscurece un poco arriba y abajo para leer los textos. Antes era una sombra de 9999px alrededor del recuadro, que en
+   Safari del iPhone tapaba el vídeo entero */
+.scanner-view::after { content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none; background: linear-gradient(rgba(0, 0, 0, 0.45), transparent 22%, transparent 70%, rgba(0, 0, 0, 0.55)); }
+.scanner-frame { position: absolute; z-index: 2; left: 50%; top: 45%; width: min(70vw, 300px); aspect-ratio: 1; transform: translate(-50%, -50%); border-radius: 28px; pointer-events: none; }
 .scanner-frame::before { content: ''; position: absolute; inset: 0; border-radius: 28px; border: 4px solid #fff; mask: linear-gradient(#000 0 0) center / calc(100% - 90px) 100% no-repeat exclude, linear-gradient(#000 0 0) center / 100% calc(100% - 90px) no-repeat exclude, linear-gradient(#000 0 0); }
 .scanner-below { position: absolute; z-index: 3; left: 0; right: 0; top: calc(45% + min(35vw, 150px) + 20px); display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 0 24px; }
-.scanner-hint { margin: 0; text-align: center; font-weight: 600; }
+.scanner-hint { margin: 0; text-align: center; font-weight: 600; text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8); }
 .scanner-close { background: rgba(255, 255, 255, 0.18); color: #fff; box-shadow: none; min-width: 160px; justify-content: center; gap: 8px; }
 .result { text-align: center; padding-top: 8px; }
 .result-mark { width: 96px; height: 96px; border-radius: 50%; display: grid; place-items: center; margin: 4px auto 16px; color: #fff; animation: pop 0.35s cubic-bezier(0.2, 1.4, 0.4, 1); }

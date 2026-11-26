@@ -18,7 +18,7 @@ export function openScanner() {
         <strong>Escanear canje</strong>
       </div>
       <div class="scanner-view">
-        <video autoplay playsinline muted style="position: absolute; inset: 0; width: 100%; height: 100%"></video>
+        <canvas class="scanner-preview" aria-hidden="true"></canvas>
         <div class="scanner-frame" aria-hidden="true"></div>
         <div class="scanner-below">
           <p class="scanner-hint">Apunta al código QR del cliente</p>
@@ -26,18 +26,39 @@ export function openScanner() {
         </div>
       </div>
     </div>`);
-  const video = scanner.querySelector('video');
   const hint = scanner.querySelector('.scanner-hint');
+  const preview = scanner.querySelector('.scanner-preview');
+  const previewContext = preview.getContext('2d');
+  let frame = null;
+  // El vídeo se crea con createElement y no dentro del HTML de arriba: el() usa un <template>, y Safari del iPhone
+  // puede no pintar un vídeo que viene de otro documento. Inline y sin sonido, que es lo que pide Safari
+  const video = document.createElement('video');
+  video.muted = true;
+  video.playsInline = true;
+  video.autoplay = true;
+  video.setAttribute('playsinline', '');
+  video.setAttribute('muted', '');
+  scanner.querySelector('.scanner-view').prepend(video);
   document.body.append(scanner);
   // Cerrar va debajo del recuadro, donde ya está el pulgar al apuntar con el móvil
   scanner.querySelector('.scanner-close').addEventListener('click', close);
-  // Safari del iPhone solo pinta el vídeo de la cámara dentro de la página si es inline y sin sonido. En el HTML ya
-  // están los atributos, pero hay que poner también las propiedades: si no, se queda en negro
-  video.muted = true;
-  video.playsInline = true;
+
+  // Lo que ve la cámara se dibuja en un canvas en cada fotograma. Aunque Safari del iPhone no pinte el <video>,
+  // sus fotogramas sí se pueden copiar (es lo que hace scanFrame para leer el QR), así que la vista previa siempre se ve
+  function drawPreview() {
+    if (video.videoWidth) {
+      if (preview.width !== video.videoWidth || preview.height !== video.videoHeight) {
+        preview.width = video.videoWidth;
+        preview.height = video.videoHeight;
+      }
+      previewContext.drawImage(video, 0, 0);
+    }
+    frame = requestAnimationFrame(drawPreview);
+  }
 
   function close() {
     clearInterval(timer);
+    cancelAnimationFrame(frame);
     stream?.getTracks().forEach(track => track.stop());   // apaga la cámara
     sheet?.remove();
     scanner.remove();
@@ -52,6 +73,7 @@ export function openScanner() {
       // Se espera a que lleguen los datos de la cámara antes de reproducir
       await new Promise(resolve => video.readyState >= 1 ? resolve() : video.addEventListener('loadedmetadata', resolve, { once: true }));
       await video.play();
+      drawPreview();
       timer = setInterval(scanFrame, 200);
     } catch {
       hint.textContent = 'No se puede usar la cámara';
