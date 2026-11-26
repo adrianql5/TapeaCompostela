@@ -4,6 +4,7 @@ import gal.usc.etse.es.tapeacompostela.exception.NotFoundException;
 import gal.usc.etse.es.tapeacompostela.model.dto.BusinessDTO;
 import gal.usc.etse.es.tapeacompostela.model.entity.Business;
 import gal.usc.etse.es.tapeacompostela.model.entity.Tag;
+import gal.usc.etse.es.tapeacompostela.model.entity.User;
 import gal.usc.etse.es.tapeacompostela.repository.BusinessRepository;
 import gal.usc.etse.es.tapeacompostela.repository.TagRepository;
 import gal.usc.etse.es.tapeacompostela.repository.UserRepository;
@@ -40,7 +41,7 @@ public class BusinessService {
     
     private static final ExampleMatcher SEARCH = ExampleMatcher.matching().withIgnorePaths("averageRating", "ratingCount").withMatcher("name", match -> match.contains().ignoreCase());
 
-    public Page<BusinessDTO> getBusinesses(String name, Business.PriceRange priceRange, Pageable page){
+    public Page<BusinessDTO> getBusinesses(String name, Business.PriceRange priceRange, String owner, Pageable page){
         
         // Query by example, la sonda solo tiene los campos que le llegaron, el resto los ignora
         // El nombre coincide si contiene el texto sin distinguir mayúsculas ("taberna" encuentra "A Taberna do Bispo")
@@ -51,6 +52,13 @@ public class BusinessService {
         // del filtro: withIgnorePaths los deja fuera. Query by Example no usa las listas
         probe.setAverageRating(null);
         probe.setRatingCount(null);
+        // Una sonda anidada: el owner de la sonda solo tiene el username, así que filtra por owner.username
+        if (owner != null) {
+            User ownerProbe = new User();
+            ownerProbe.setUsername(owner);
+            ownerProbe.setPoints(null);
+            probe.setOwner(ownerProbe);
+        }
         return businesses.findAll(Example.of(probe, SEARCH), page).map(this::toDTO);
     }
 

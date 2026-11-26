@@ -44,20 +44,21 @@ public class BusinessController {
     private final BusinessService businessService;
     private final SummaryService summaryService;
 
-    // GET /businesses?name=taberna&priceRange=MODERATE&page=0&size=5&sort=averageRating&direction=DESC
-    // Cada parámetro es opcional. La respuesta es una página de negocios, con los campos de la vista de resumen
-    @Operation(summary = "Search businesses by name and price range, one page at a time")
+    // GET /businesses?name=taberna&priceRange=MODERATE&owner=hugoocoto&page=0&size=5&sort=averageRating&direction=DESC
+    // Cada parámetro es opcional. owner deja solo los negocios de ese usuario (la app de propietarios lo usa para "mis locales"). La respuesta es una página de negocios, con los campos de la vista de resumen
+    @Operation(summary = "Search businesses by name, price range and owner, one page at a time")
     @GetMapping
     @JsonView(BusinessDTO.Views.Summary.class)
     public Page<BusinessDTO> getBusinesses(
          @RequestParam(required = false) String name,
          @RequestParam(required = false) PriceRange priceRange,
+         @RequestParam(required = false) String owner,
          @RequestParam(defaultValue = "0") @Min(0) int page,
          @RequestParam(defaultValue = "10") @Min(1) @Max(50) int size,
          @RequestParam(defaultValue = "name") String sort,
          @RequestParam(defaultValue = "ASC") Sort.Direction direction
     ){
-        return businessService.getBusinesses(name, priceRange, PageRequest.of(page, size, Sort.by(direction, sort)));
+        return businessService.getBusinesses(name, priceRange, owner, PageRequest.of(page, size, Sort.by(direction, sort)));
     }
 
     // Un negocio con todos sus campos (vista Detail). Versión 1.0
