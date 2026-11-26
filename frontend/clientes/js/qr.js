@@ -1,15 +1,17 @@
-import { request } from './api.js';
+import { request, getSession } from './api.js';
 import { el, esc, icon } from './ui.js';
 
 // El QR de un canje, a pantalla completa para que el local lo escanee. El backend firma un QR nuevo cada 30
 // segundos (GET /redemptions/{id}/qr): aquí se pide otro cuando llega expiresAt, y una barra enseña el tiempo
 // que le queda. Mientras está abierto escucha los avisos del servidor (GET /redemptions/events, Server-Sent
-// Events): cuando el local valida el canje llega "redemption-used" y se enseña el check en ese momento
+// Events): cuando el local valida el canje llega "redemption-used" y se enseña el check en ese momento. Por si los
+// avisos no llegan (hay proxies y túneles que guardan la respuesta hasta que termina, y esta no termina nunca), también
+// se pregunta cada 5 segundos si ya está usado
 export function openQr({ redemption, businessName, onClose, onUsed }) {
   let qr = null;
   let status = redemption.status;
   let error = null;
-  let qrTimer, tick;
+  let qrTimer, tick, poll;
   const listening = new AbortController(); // para cerrar la conexión de los avisos al salir
 
   const screen = el(`
@@ -32,6 +34,7 @@ export function openQr({ redemption, businessName, onClose, onUsed }) {
   function stop() {
     clearTimeout(qrTimer);
     clearInterval(tick);
+    clearInterval(poll);
     listening.abort();
   }
 
@@ -144,8 +147,9 @@ export function openQr({ redemption, businessName, onClose, onUsed }) {
   render();
   if (status === 'PENDING') {
     fetchQr();
-    // El reloj de la barra, y los avisos del servidor
+    // El reloj de la barra, los avisos del servidor y, de respaldo, la pregunta "¿ya está usado?" cada 5 segundos
     tick = setInterval(updateCountdown, 1000);
     listen();
+    poll = setInterval(checkStatus, 5000);
   }
 }
