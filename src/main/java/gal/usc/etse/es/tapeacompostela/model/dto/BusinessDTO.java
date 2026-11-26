@@ -22,8 +22,9 @@ public record BusinessDTO(
         @JsonView(Views.Summary.class) @NotBlank @Size(max = 150) String name,
         @JsonView(Views.Detail.class) @Size(max = 2000) String description,
         @JsonView(Views.Summary.class) @NotBlank String address,
-        @JsonView(Views.Detail.class) @NotNull Double latitude,
-        @JsonView(Views.Detail.class) @NotNull Double longitude,
+        // En el resumen también: la app de clientes pinta la lista en un mapa
+        @JsonView(Views.Summary.class) @NotNull Double latitude,
+        @JsonView(Views.Summary.class) @NotNull Double longitude,
         @JsonView(Views.Summary.class) PriceRange priceRange,
         @JsonView(Views.Detail.class) @Size(max = 20) String phone,
         @Schema(description = "Average of its reviews, from 1 to 5", example = "4.50", accessMode = Schema.AccessMode.READ_ONLY)

@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <!-- viewport-fit=cover: la app usa toda la pantalla del móvil, también bajo la muesca -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#B0124A" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:wght@400;600;700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&display=swap" rel="stylesheet" />
+    <!-- Leaflet pinta el mapa; qrcode-generator dibuja el QR del canje. Dos librerías de JavaScript normal, sin npm:
+         el navegador las descarga de unpkg y crean las variables globales L y qrcode -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/qrcode-generator@1.4.4/qrcode.js"></script>
+    <link rel="stylesheet" href="styles.css" />
+    <title>TapeaCompostela</title>
+  </head>
+  <body>
+    <!-- La app es una sola pantalla: el mapa siempre está debajo y todo lo demás (la ficha de un local, los canjes,
+         el perfil, el QR) se abre encima. Lo fijo está aquí; lo que se abre y se cierra lo crea js/app.js -->
+    <div id="map" class="map"></div>
+
+    <header class="top-bar">
+      <div class="top-row">
+        <label class="search">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
+          <input id="search" type="search" placeholder="Bar, calle o tapa" aria-label="Buscar locales" enterkeyhint="search" />
+          <button id="search-clear" class="search-clear" aria-label="Borrar búsqueda" hidden>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12" /></svg>
+          </button>
+        </label>
+        <button id="account" class="icon-btn" aria-label="Iniciar sesión">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4" /><path d="M4 21c0-4 4-6 8-6s8 2 8 6" /></svg>
+        </button>
+      </div>
+      <div class="top-row">
+        <div class="chips" role="group" aria-label="Filtrar por precio">
+          <button class="chip" data-price="CHEAP" aria-pressed="false">€</button>
+          <button class="chip" data-price="MODERATE" aria-pressed="false">€€</button>
+          <button class="chip" data-price="EXPENSIVE" aria-pressed="false">€€€</button>
+        </div>
+        <div style="flex: 1"></div>
+        <button id="points" class="points-pill" hidden></button>
+      </div>
+    </header>
+
+    <div id="side-buttons" class="side-buttons">
+      <span class="badge-wrap">
+        <button id="open-redemptions" class="icon-btn" aria-label="Tus canjes">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8a2 2 0 0 0 2-2h14a2 2 0 0 0 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 0-2 2H5a2 2 0 0 0-2-2v-2a2 2 0 0 0 0-4z" /><path d="M13 6v12" stroke-dasharray="2 2" /></svg>
+        </button>
+        <span id="badge" class="badge" hidden></span>
+      </span>
+      <button id="locate" class="icon-btn" aria-label="Centrar en mi ubicación">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4" /><path d="M12 2v3M12 19v3M2 12h3M19 12h3" /></svg>
+      </button>
+    </div>
+
+    <div id="map-status" class="map-status" role="status" hidden></div>
+
+    <!-- type="module": los archivos de js/ se reparten el trabajo con import y export -->
+    <script type="module" src="js/app.js"></script>
+  </body>
+</html>
