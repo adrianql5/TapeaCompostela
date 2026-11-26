@@ -15,19 +15,26 @@ export function openScanner() {
   const scanner = el(`
     <div class="scanner" role="dialog" aria-label="Escanear un canje">
       <div class="scanner-top">
-        <button class="icon-btn" aria-label="Cerrar el escáner">${icon('close')}</button>
         <strong>Escanear canje</strong>
       </div>
       <div class="scanner-view">
-        <video playsinline muted style="position: absolute; inset: 0; width: 100%; height: 100%"></video>
+        <video autoplay playsinline muted style="position: absolute; inset: 0; width: 100%; height: 100%"></video>
         <div class="scanner-frame" aria-hidden="true"></div>
-        <p class="scanner-hint">Apunta al código QR del cliente</p>
+        <div class="scanner-below">
+          <p class="scanner-hint">Apunta al código QR del cliente</p>
+          <button class="btn scanner-close">${icon('close')} Cerrar</button>
+        </div>
       </div>
     </div>`);
   const video = scanner.querySelector('video');
   const hint = scanner.querySelector('.scanner-hint');
   document.body.append(scanner);
-  scanner.querySelector('.scanner-top .icon-btn').addEventListener('click', close);
+  // Cerrar va debajo del recuadro, donde ya está el pulgar al apuntar con el móvil
+  scanner.querySelector('.scanner-close').addEventListener('click', close);
+  // Safari del iPhone solo pinta el vídeo de la cámara dentro de la página si es inline y sin sonido. En el HTML ya
+  // están los atributos, pero hay que poner también las propiedades: si no, se queda en negro
+  video.muted = true;
+  video.playsInline = true;
 
   function close() {
     clearInterval(timer);
@@ -42,6 +49,8 @@ export function openScanner() {
     try {
       stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment', width: { ideal: 720 }, height: { ideal: 720 } } });
       video.srcObject = stream;
+      // Se espera a que lleguen los datos de la cámara antes de reproducir
+      await new Promise(resolve => video.readyState >= 1 ? resolve() : video.addEventListener('loadedmetadata', resolve, { once: true }));
       await video.play();
       timer = setInterval(scanFrame, 200);
     } catch {
