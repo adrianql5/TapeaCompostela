@@ -124,6 +124,7 @@ export function openBusiness({ onClose, onNeedLogin, onRedeem, onChanged }) {
                 <span class="muted small">${shortDate(review.createdAt)}</span>
               </div>
               ${review.comment ? `<p>${esc(review.comment)}</p>` : ''}
+              ${user && review.user === user.username ? `<button class="btn btn-ghost btn-small" style="margin-top: 8px" data-action="delete-review" data-review="${review.id}">${icon('close', 18)} Borrar mi reseña</button>` : ''}
             </article>`).join('')}
           ${nextCursor ? '<button class="btn btn-ghost btn-block" style="margin-top: 8px" data-action="more">Ver más reseñas</button>' : ''}
         </section>
@@ -142,6 +143,7 @@ export function openBusiness({ onClose, onNeedLogin, onRedeem, onChanged }) {
     on('more', loadMoreReviews);
     on('login', onNeedLogin);
     on('write', () => (user ? openReviewForm() : onNeedLogin()));
+    on('delete-review', event => openDeleteReview(Number(event.currentTarget.dataset.review)));
     on('redeem', event => {
       const reward = summary.rewards.find(r => r.id === Number(event.currentTarget.dataset.reward));
       openRedeemConfirm(reward, detail.name);
@@ -200,6 +202,39 @@ export function openBusiness({ onClose, onNeedLogin, onRedeem, onChanged }) {
         alert.hidden = false;
         submit.disabled = false;
         submit.textContent = 'Publicar reseña';
+      }
+    });
+  }
+
+  // Borrar tu reseña: DELETE /reviews/{id}. El backend solo deja borrarla a su autor (o a un admin).
+  // Se pregunta antes porque no se puede deshacer
+  function openDeleteReview(id) {
+    const confirm = openSheet({ label: 'Borrar reseña', scrim: true });
+    confirm.body.innerHTML = `
+      <h2>¿Borrar tu reseña?</h2>
+      <p class="muted" style="margin: 6px 0 16px">Desaparece de ${esc(props.business.name)} y no se puede recuperar.</p>
+      <div class="alert error" hidden></div>
+      <button class="btn btn-primary btn-block">Borrar reseña</button>
+      <button class="btn btn-ghost btn-block" style="margin-top: 8px">Cancelar</button>`;
+    const [remove, cancel] = confirm.body.querySelectorAll('button');
+    const alert = confirm.body.querySelector('.alert');
+    cancel.addEventListener('click', () => confirm.close());
+
+    remove.addEventListener('click', async () => {
+      remove.disabled = true;
+      remove.textContent = 'Borrando…';
+      alert.hidden = true;
+      try {
+        await request(`/reviews/${id}`, { method: 'DELETE' });
+        toast('Reseña borrada', 'ok');
+        confirm.close();
+        load();
+        onChanged();
+      } catch (e) {
+        alert.textContent = e.message;
+        alert.hidden = false;
+        remove.disabled = false;
+        remove.textContent = 'Borrar reseña';
       }
     });
   }
